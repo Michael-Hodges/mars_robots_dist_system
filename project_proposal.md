@@ -1,3 +1,4 @@
+Nadiia Ramthun
 
 # Summary Description
 In this paper we propose a distributed system for a fleet of semi-autonomous robots exploring a planet. In our hypothetical scenario a group of robots are placed onto a planet and begin exploring the surface. The robots goal is to maintain and agree upon their state, maintain communication, and distribute tasks. In so doing, the robots must be able to keep track of their own state as well as access information about other robots states, coordinate tasks broadcasted to them, agree upon data, and communicate reliably with one another. 
@@ -36,7 +37,12 @@ In this section we review the algorithms we will implement for our semi-autonomo
 ### Leader election (Chapter 15.3) - Alex
 - coordinate tasks
 ### concensus 15.5 - Nadiia
-- agree upon commands Nasa
+Another algorithm that we plan to use in our solution is the one that handles coordinate task consensus. Since robots will receive the messages from the port on Earth as to where to go to explore items such as rocks, there might be delay, wrong ordering of messages, or even tampering with messages received by malicious party. Furthermore, the robot may lose part of its state if it crashes. Upon receival of messages, the robots must conclude as to how to proceed with their task. 
+
+In general, the agreement algorithms work by each process starting in undecided state and proposing a value from a set of possible values for the solution. After that, each process decided upon the value in question and enters a decided state in which they no longer can change their decision. Each algorithm solving consensus problem must have following properties. First, in order to be useful at all, an algorithm must terminate with each process setting its value. Second, all correct processes must agree and choose the same value upon entering a decided state. Third, the algorithm must have an “integrity” that is if a correct process proposed a value upon entering a decided state, it must choose that value.
+
+In asynchronous distributed system reaching consensus cannot be guaranteed. Therefore, our solution must be a synchronous system, in which we can use simple multicast to broadcast all values we consider to be correct by each process and assume the number of the failure out of all processes we expect to occur. After completing one more round than assumed number, we can pick the minimum value.
+
 ###group membership (peer to peer): look into tapestry and pastry (Chapter 10) - Michael
 To implement a peer to peer system the main focus will be on the routing algorithm. We will follow the algorithm as implemented by Pastry, a message routing infrastructure. In so doing, each node of our algorithm will be given a GUID (globally unique identifier). The goal of pastry is to continually transport a message to a node that is closer to the destination node. Utilizing the GUID the message is transported to a node who's GUID is closer to the destination ID. The underlying transport protocol for these messages is normally UDP. To avoid excessive amounts of hops a routing table is developed to reduce the hop-count or round trip latency. With the use of a routing table and appropriate routing algorithm the message can be delivered in O(log N) steps. 
 
