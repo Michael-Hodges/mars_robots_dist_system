@@ -2,7 +2,13 @@
 
 In this paper we propose a distributed system for a fleet of semi-autonomous robots exploring a planet. In our hypothetical scenario a group of robots are placed onto a planet and begin exploring the surface. The robots goal is to maintain and agree upon their state, maintain communication, and distribute tasks. In so doing, the robots must be able to keep track of their own state as well as access information about other robots states, coordinate tasks broadcasted to them, agree upon data, and communicate reliably with one another.
 
-Some key problems associated with our system are as follows:
+#### Authors
+- Michael Hodges
+- Matthew Kuhn
+- Nadiia Ramthun
+- Alexander Stults
+
+### Key features of our distributed system:
 
 - No centralized servers
 - Nodes can enter and leave certain reachable parts of the network.
@@ -10,19 +16,22 @@ Some key problems associated with our system are as follows:
 - Coordinating tasks
 - Reliable communication to the group
 
+### Expected scenarios to handle
+We also list out some failure scenarios that we hope to be able to tackle in our implementation
+
+- Unreachable robot. How can we handle a robot going offline for an extended period and reentering the network.
+- Dropped messages. We need to ensure that our nodes reliably deliver messages to the leader and other members of the fleet.
+
+In general, we can abstract our problem out to a higher level and describe it as a peer-to-peer network used to maintain the state of a distributed system. Within this description the commands we send will merely be updated in the state of a specific robot.
+
+
+### Features out of scope
 To eliminate scope creep we will only implement a subset of algorithms and focus only on the distributed system aspect of our application. Therefore the following will not be included in our implementation:
 
 - Robot Navigation: Developing an algorithm for how to control the robots would be necessary in a real application but does not aid in the learning and development of distributed systems.
 - Robotic mesh network: we will assume that this network exists and allows our robots to talk to each other.
 - Altitude and coordinate calculation: obviously on a planet there are no existing satellites and therefore, no way to utilize such satellites to calculate coordinates. Thus, we will generate our data in a relative way and not focus on what the data actually is.
 - Issuing commands: To control the fleet of robots some centralized command will be issued from the likes of a NASA. This is out of our scope and will assume we can broadcast commands and we will focus on developing a way to handle simulated commands
-
-We also list out some failure scenarios that we hope to be able to tackle in our implementation
-
-- Loss of communication or destruction of a robot. How can we handle a robot going offline for an extended period and reentering the network.
-- TODO
-
-In general, we can abstract our problem out to a higher level and describe it as a peer-to-peer network used to maintain the state of a distributed system. Within this description the commands we send will merely be updated in the state of a specific robot.
 
 # Archichitecture overview diagram (figure) and design description
 
@@ -31,6 +40,8 @@ In general, we can abstract our problem out to a higher level and describe it as
 what libraries used to implement
 look into tapestry and pastry
 
+We will be writing our own Java implementation of the Bully algorithm for leader election.
+
 Robustness
 
 # Key Algorithms 4
@@ -38,10 +49,10 @@ Robustness
 (write overview for each algorithm)
 In this section we review the algorithms we will implement for our semi-autonomous robotic system. In so doing we will review the following algoritms: Leader election, Concensus, group membership, and multicast/reliable multicast.
 
-### Leader election (Chapter 15.3) - Alex
+### Leader election (Bully Algorithm)
+Within the fleet of robots a leader will need to be elected. The leader will be responsible for assigning tasks within the fleet and ensuring their completion
 
-- coordinate tasks
-  <<<<<<< HEAD
+In order to elect a leader we will use the Bully algorithm. This algorithm can handle crashes within the election process, and unlike the ring-algorithm, doesn't require the candidates to know their direct neighbors. The Bully algorithm requires a unique id for each member that can ordered by each member and for this I suggest either a MAC address or some sort of hardware level unique identifier. This will allow us to avoid the Bully algorithm's failure case around two candidates with identical priority numbers.
 
 ### concensus 15.5 - Nadiia
 
@@ -91,4 +102,10 @@ how to store states shared among robots
 
 # expected results
 
-In conclusion, we hope to develop and demonstrate a successful simulation of a fleet of robots exploring the surface of an unknown planet. With this simulation we will show how our four chosen algorithms (leader election, concensus, peer-to-peer, and reliable multicast) are able to maintain the state of a distributed system, agree upon data, and distribute tasks over a constantly changing network. Our results will be shown via the terminal where we can run multiple simulated robots, pass commands, and view the states of said robots.
+In conclusion, we hope to develop and demonstrate a successful simulation of a fleet of 
+robots exploring the surface of an unknown planet. 
+With this simulation we will show how our four chosen algorithms 
+(leader election, concensus, peer-to-peer, and reliable multicast) are able to maintain 
+the state of a distributed system, agree upon data, and distribute tasks over a constantly
+ changing network. Our results will be shown via the terminal where we can run multiple
+  simulated robots, pass commands, and view the states of said robots.
