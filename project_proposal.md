@@ -1,8 +1,3 @@
-states: (timestamp, Coordinates(relative), Altitude(relative), destination, task, leader, ) distributed among agents 
-The state of the system should be distributed across multiple client 
-
-
-
 
 # Summary Description
 In this paper we propose a distributed system for a fleet of semi-autonomous robots exploring a planet. In our hypothetical scenario a group of robots are placed onto a planet and begin exploring the surface. The robots goal is to maintain and agree upon their state, maintain communication, and distribute tasks. In so doing, the robots must be able to keep track of their own state as well as access information about other robots states, coordinate tasks broadcasted to them, agree upon data, and communicate reliably with one another. 
@@ -43,7 +38,9 @@ In this section we review the algorithms we will implement for our semi-autonomo
 ### concensus 15.5 - Nadiia
 - agree upon commands Nasa
 ###group membership (peer to peer): look into tapestry and pastry (Chapter 10) - Michael
-Pastry
+To implement a peer to peer system the main focus will be on the routing algorithm. We will follow the algorithm as implemented by Pastry, a message routing infrastructure. In so doing, each node of our algorithm will be given a GUID (globally unique identifier). The goal of pastry is to continually transport a message to a node that is closer to the destination node. Utilizing the GUID the message is transported to a node who's GUID is closer to the destination ID. The underlying transport protocol for these messages is normally UDP. To avoid excessive amounts of hops a routing table is developed to reduce the hop-count or round trip latency. With the use of a routing table and appropriate routing algorithm the message can be delivered in O(log N) steps. 
+
+We will now get into more details on how the algorithm is implemented. Each node maintains a tree-structured routing table of GUIDs and IP addresses. This routing table has as many rows as there are hexadecimal digits in the GUID, therefore, if there are 128 bits in a GUID the routing table will have 128/4 = 32 rows. Each row 
 #### Routing Algorithm
 #### Host Integration
 #### Host failure or departure
