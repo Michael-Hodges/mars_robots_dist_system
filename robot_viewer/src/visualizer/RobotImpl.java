@@ -16,6 +16,7 @@ public class RobotImpl implements Entity, Robot {
     private Color color;
     private Point targetLocation;
     private Random random = new Random();
+    private String label = null;
 
     public RobotImpl(int x, int y, int angle) {
         this.color = Color.GREEN;
@@ -31,6 +32,10 @@ public class RobotImpl implements Entity, Robot {
 
     public void rotate(int degrees) {
         this.angle = degrees;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     @Override
@@ -57,6 +62,9 @@ public class RobotImpl implements Entity, Robot {
 
     public void draw(Graphics g) {
         g.drawCircle(x, y, SIZE, color);
+        if (this.label != null) {
+            g.writeText(x,y, label);
+        }
     }
 
     public void update(World w) {

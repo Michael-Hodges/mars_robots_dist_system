@@ -14,6 +14,7 @@ public class Client {
         List<RemoteRobot> robots = new ArrayList<>();
         for(int i = 0; i < 100; i++) {
             RemoteRobot robot = s.addRobot(500,500);
+            robot.setLabel("R_" + i);
             robots.add(robot);
         }
 

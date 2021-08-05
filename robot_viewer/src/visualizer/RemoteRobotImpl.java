@@ -26,4 +26,9 @@ public class RemoteRobotImpl implements RemoteRobot {
     public void setColor(int r, int g, int b) throws RemoteException {
         this.wrappedRobot.setColor(r,g,b);
     }
+
+    @Override
+    public void setLabel(String label) {
+        this.wrappedRobot.setLabel(label);
+    }
 }
