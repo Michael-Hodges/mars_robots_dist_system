@@ -1,6 +1,7 @@
 package visualizer;
 
 import java.awt.*;
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.Random;
 

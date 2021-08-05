@@ -1,9 +1,10 @@
 package visualizer;
 
 import java.awt.*;
+import java.io.Serializable;
 import java.rmi.RemoteException;
 
-public class RemoteRobotImpl implements RemoteRobot{
+public class RemoteRobotImpl implements RemoteRobot {
 
     private Robot wrappedRobot;
 
