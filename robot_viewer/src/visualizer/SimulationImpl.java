@@ -1,11 +1,14 @@
-import javax.swing.*;
+package visualizer;
 
-public class PlanetViewer extends JPanel {
+import javax.swing.*;
+import java.awt.*;
+
+public class SimulationImpl extends JPanel implements Simulation {
 
     GraphicImpl graphics;
     World world;
 
-    public PlanetViewer() {
+    public SimulationImpl() {
         this.graphics = null;
         this.world = new World();
     }
@@ -26,15 +29,13 @@ public class PlanetViewer extends JPanel {
     }
 
     public void start() {
-        Robot r = new Robot();
-        r.setPosition(100, 100);
-        this.world.addEntity(r);
-
-        Robot q = new Robot();
-        q.setPosition(200,100);
-        this.world.addEntity(q);
         Timer timer = new Timer(1000/60, (e) -> updateLoop());
         timer.start();
+    }
+
+    @Override
+    public void addEntity(Entity e) {
+        this.world.addEntity(e);
     }
 
     public void updateLoop() {

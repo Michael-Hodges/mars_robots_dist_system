@@ -1,16 +1,18 @@
-import javax.swing.*;
-import java.awt.*;
+import java.rmi.RemoteException;
 
 public class Program {
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        PlanetViewer pv = new PlanetViewer();
-        frame.setSize(1000,1000);
-        frame.add(pv);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        pv.start();
-        frame.setVisible(true);
+        if (args[0].equals("client")) {
+            Client client = new Client();
+            try {
+                client.start();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        } else if (args[0].equals("server")) {
+            Server server = new Server();
+            server.start();
+        }
     }
 }

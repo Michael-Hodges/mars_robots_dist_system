@@ -1,3 +1,5 @@
+package visualizer;
+
 public interface Entity {
     void draw(Graphics graphics);
     void update(World world);

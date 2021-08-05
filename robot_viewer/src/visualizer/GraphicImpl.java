@@ -1,3 +1,5 @@
+package visualizer;
+
 import java.awt.*;
 
 public class GraphicImpl implements Graphics {
