@@ -1,0 +1,1 @@
+java -jar ..\out\artifacts\robot_viewer_jar\robot_viewer.jar server
