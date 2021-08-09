@@ -42,16 +42,6 @@ public class CoordinatorClient implements Coordinator{
         }
     }
 
-    private class SocketChannel {
-        DataInputStream in;
-        DataOutputStream out;
-
-        public SocketChannel(DataInputStream in, DataOutputStream out) {
-            this.in = in;
-            this.out = out;
-        }
-    }
-
     private class PortRequest {
 
         int port;
