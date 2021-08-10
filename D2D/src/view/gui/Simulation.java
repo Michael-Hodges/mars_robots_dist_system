@@ -1,6 +1,4 @@
-package visualizer;
-
-import javax.swing.*;
+package view.gui;
 
 public interface Simulation {
     void start();

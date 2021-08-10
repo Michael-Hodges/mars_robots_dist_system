@@ -1,7 +1,6 @@
-package visualizer;
+package view.gui;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class SimulationImpl extends JPanel implements Simulation {
 

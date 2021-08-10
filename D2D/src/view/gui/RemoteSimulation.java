@@ -1,4 +1,4 @@
-package visualizer;
+package view.gui;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

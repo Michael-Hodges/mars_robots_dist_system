@@ -1,9 +1,8 @@
 package controller;
 
-import model.Coordinator;
-import model.CoordinatorClient;
-import model.CoordinatorImpl;
-import model.CoordinatorServer;
+import model.*;
+import view.GuiClient;
+import view.GuiServer;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,7 +14,10 @@ public class Program {
         int coordinatorPort = 5000;
         if (args[0].equals("coordinator")) {
             startCoordinator(coordinatorPort);
-        } else {
+        } else if(args[0].equals("gui_server")) {
+            startGUIView();
+        }
+        else {
             String coordinatorHostOrIP = "localhost";
             startPeerNode(coordinatorHostOrIP, coordinatorPort);
         }
@@ -32,9 +34,21 @@ public class Program {
     }
 
     static void startPeerNode(String coordinatorHostOrIP, int port) {
+        String nodeName = "10.0.0.1";
         Coordinator client = new CoordinatorClient(coordinatorHostOrIP, port);
-        int clientPort = client.registerNode("localhost");
+        int clientPort = client.registerNode(nodeName);
+        GuiClient guiClient = new GuiClient(nodeName + ":" + clientPort);
+        NodeImpl impl = new NodeImpl(nodeName, clientPort);
+        impl.setListener(guiClient);
+
+        impl.start();
+
         List<String> hosts = client.getNodes();
         System.out.println("Received " + hosts.size() + " hosts.");
+    }
+
+    static void startGUIView() {
+        GuiServer server = new GuiServer();
+        server.start();
     }
 }

@@ -1,8 +1,6 @@
-package visualizer;
+package view.gui;
 
 import java.awt.*;
-import java.io.Serializable;
-import java.rmi.RemoteException;
 import java.util.Random;
 
 public class RobotImpl implements Entity, Robot {
@@ -31,7 +29,7 @@ public class RobotImpl implements Entity, Robot {
     }
 
     public void rotate(int degrees) {
-        this.angle = degrees;
+        this.angle += degrees;
     }
 
     public void setLabel(String label) {
@@ -72,6 +70,9 @@ public class RobotImpl implements Entity, Robot {
             Point delta = this.toCartesian(this.speed, this.angle);
             this.x += delta.x;
             this.y += delta.y;
+            this.moveDistance -= this.speed;
+        } else if (this.moveDistance < 0) {
+            this.moveDistance = 0; //clamp to zero
         }
     }
 

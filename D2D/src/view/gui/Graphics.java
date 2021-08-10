@@ -1,4 +1,4 @@
-package visualizer;
+package view.gui;
 
 public interface Graphics {
 

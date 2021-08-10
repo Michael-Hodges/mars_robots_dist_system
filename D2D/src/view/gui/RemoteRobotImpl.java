@@ -1,12 +1,11 @@
-package visualizer;
+package view.gui;
 
-import java.awt.*;
-import java.io.Serializable;
+
 import java.rmi.RemoteException;
 
 public class RemoteRobotImpl implements RemoteRobot {
 
-    private Robot wrappedRobot;
+    private view.gui.Robot wrappedRobot;
 
     public RemoteRobotImpl(Robot robot) {
         this.wrappedRobot = robot;
