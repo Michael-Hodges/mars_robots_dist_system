@@ -42,6 +42,8 @@ public class CoordinatorClient implements Coordinator{
         }
     }
 
+
+
     private class PortRequest {
 
         int port;
@@ -52,18 +54,16 @@ public class CoordinatorClient implements Coordinator{
         }
 
         public void accept(SocketChannel channel) {
-            this.port = -1;
             this.isSuccess = false;
+            this.port = -1;
             try {
                 log("Registering: " + nodeName);
-                channel.out.writeInt(1);
+                channel.out.writeUTF("coordinator");
+                channel.out.writeUTF(CoordinatorProcessDelegateImpl.Message.Register.name());
                 channel.out.writeUTF(nodeName);
                 channel.out.flush();
-                int successCode = channel.in.readInt();
-                if (successCode == 1) {
-                    this.port = channel.in.readInt();
-                    this.isSuccess = true;
-                }
+                this.port = channel.in.readInt();
+                this.isSuccess = true;
                 channel.in.close();
                 channel.out.close();
             } catch (IOException e) {
@@ -83,19 +83,19 @@ public class CoordinatorClient implements Coordinator{
             this.hosts = new ArrayList<>();
             try {
                 log("Retrieving hosts...");
-                channel.out.writeInt(2);
+                channel.out.writeUTF("coordinator");
+                channel.out.writeUTF(CoordinatorProcessDelegateImpl.Message.GetNodes.name());
                 channel.out.flush();
-                int successCode = channel.in.readInt();
-                if (successCode == 2) {
-                    int nodeCount = channel.in.readInt();
-                    while(nodeCount > 0) {
-                        String host = channel.in.readUTF();
-                        log("Received - " + host);
-                        hosts.add(host);
-                        nodeCount--;
-                    }
-                    this.isSuccess = true;
+
+                int nodeCount = channel.in.readInt();
+                while(nodeCount > 0) {
+                    String host = channel.in.readUTF();
+                    log("Received - " + host);
+                    hosts.add(host);
+                    nodeCount--;
                 }
+                this.isSuccess = true;
+
                 channel.in.close();
                 channel.out.close();
             } catch (IOException e) {
@@ -107,10 +107,7 @@ public class CoordinatorClient implements Coordinator{
     private void sendReceive(Consumer<SocketChannel> onConnection) {
         try {
             Socket conn = new Socket(this.hostOrIp, this.port);
-
-            DataInputStream in = new DataInputStream(new BufferedInputStream(conn.getInputStream()));
-            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(conn.getOutputStream()));
-            SocketChannel channel = new SocketChannel(in, out);
+            SocketChannel channel = new SocketChannel(conn);
             onConnection.accept(channel);
         } catch (IOException e) {
             e.printStackTrace();

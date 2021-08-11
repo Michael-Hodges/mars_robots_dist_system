@@ -25,7 +25,8 @@ public class Program {
 
     static void startCoordinator(int port) {
         Coordinator impl = new CoordinatorImpl();
-        CoordinatorServer server = new CoordinatorServer(impl, port);
+        TCPServer server = new TCPServer(port);
+        server.register("coordinator", new CoordinatorProcessDelegateImpl(impl));
         try {
             server.run();
         } catch (IOException e) {
