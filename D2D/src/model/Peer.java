@@ -12,5 +12,6 @@ public interface Peer {
     void setListener(ActionListener listener); //will be used to connect to GUI
     void sendRegisterRequestTo(Peer peer);
     void ElectLeader();
+    Peer GetLeader();
     void add(Peer peer);
 }

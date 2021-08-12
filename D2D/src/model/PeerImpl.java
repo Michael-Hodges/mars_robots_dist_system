@@ -104,6 +104,17 @@ public class PeerImpl implements Peer {
     }
 
     @Override
+    public Peer GetLeader() {
+        BullyAlgorithmParticipant p = this.selfBullyParticipant.getCoordinator();
+        if (p == null) {
+            ElectLeader();
+            p = this.selfBullyParticipant.getCoordinator();
+        }
+        
+        return new PeerImpl(p.getHostOrIp(), p.getPort());
+    }
+
+    @Override
     public synchronized void add(Peer peer) {
         if (!peer.equals(this) && !peers.contains(peer)) {
             Logger.log("Added Peer: " + peer);
