@@ -27,7 +27,7 @@ public class CoordinatorProcessDelegateImpl implements ProcessDelegate {
 
 
     class CoordinatorProcess implements ActionListener {
-        SocketChannel channel;
+        MessageChannel channel;
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -36,7 +36,7 @@ public class CoordinatorProcessDelegateImpl implements ProcessDelegate {
             Message message = Message.valueOf(event.getActionCommand());
             try {
                 this.handleInput(message);
-                this.channel.out.flush();
+                this.channel.flush();
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
@@ -58,22 +58,22 @@ public class CoordinatorProcessDelegateImpl implements ProcessDelegate {
         }
 
         private void onRegister() throws IOException {
-            String hostOrIp = channel.in.readUTF();
+            String hostOrIp = channel.readNextString();
             CoordinatorProcessDelegateImpl.this.log("Registering node: " + hostOrIp);
             int port = CoordinatorProcessDelegateImpl.this.coordinator.registerNode(hostOrIp);
             CoordinatorProcessDelegateImpl.this.log("Registering port: " + port);
-            channel.out.writeInt(port);
-            channel.out.flush();
+            channel.writeInt(port);
+            channel.flush();
         }
 
         private void onGetNodes() throws IOException {
             CoordinatorProcessDelegateImpl.this.log("Retrieving nodes...");
             List<String> nodes = CoordinatorProcessDelegateImpl.this.coordinator.getNodes();
-            channel.out.writeInt(nodes.size());
+            channel.writeInt(nodes.size());
             for (String node : nodes) {
-                channel.out.writeUTF(node);
+                channel.writeString(node);
             }
-            channel.out.flush();
+            channel.flush();
         }
     }
 

@@ -46,8 +46,8 @@ public class Program {
         List<Peer> peers = nodesToPeers(client.getNodes());
         System.out.println("Received " + peers.size() + " hosts.");
         GuiClient guiClient = new GuiClient(nodeName + ":" + clientPort);
-
-        PeerImpl impl = new PeerImpl(nodeName, clientPort);
+        MessageChannelFactory messageChannelFactory = new MessageChannelFactoryImpl();
+        PeerImpl impl = new PeerImpl(nodeName, clientPort, messageChannelFactory);
         for(Peer p : peers) {
             impl.add(p);
         }
@@ -63,14 +63,11 @@ public class Program {
     static void startBullyElection(int port) {
         System.out.println("Starting bully election");
         String hostOrIp = "localhost";
-        Socket conn = null;
         try {
-            conn = new Socket(hostOrIp, port);
-            SocketChannel channel = new SocketChannel(conn);
-            channel.out.writeUTF("peer");
-            channel.out.writeUTF("ElectLeader");
-            channel.out.writeInt(0);
-            channel.out.flush();
+            MessageChannel channel = new TCPMessageChannelImpl(hostOrIp, port);
+            channel.writeString("peer");
+            channel.writeString("ElectLeader");
+            channel.writeInt(0);
             channel.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -88,6 +85,6 @@ public class Program {
 
     static Peer toPeer(String node) {
         String[] elems = node.split(":");
-        return new PeerImpl(elems[0], Integer.parseInt(elems[1]));
+        return new PeerImpl(elems[0], Integer.parseInt(elems[1]), new MessageChannelFactoryImpl());
     }
 }

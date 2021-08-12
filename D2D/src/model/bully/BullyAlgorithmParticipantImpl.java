@@ -1,7 +1,9 @@
 package model.bully;
 
 import model.Logger;
-import model.SocketChannel;
+import model.MessageChannel;
+import model.MessageChannelFactory;
+import model.TCPMessageChannelImpl;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,11 +29,14 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     private String hostOrIp;
     private ActionListener listener;
     int timeoutInMilliseconds = 200;
+    private MessageChannelFactory messageChannelFactory;
 
-    public BullyAlgorithmParticipantImpl(String hostOrIp, int port, int processId) {
+    public BullyAlgorithmParticipantImpl(String hostOrIp, int port, int processId,
+                                         MessageChannelFactory messageChannelFactory) {
         this.hostOrIp = hostOrIp;
         this.port = port;
         this.processId = processId;
+        this.messageChannelFactory = messageChannelFactory;
         this.otherParticipants = new ArrayList<>();
         this.coordinator = null;
         this.countOfAnswers = 0;
@@ -153,12 +158,10 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         log(message.name());
         this.sendToListener(message);
         try {
-            Socket conn = new Socket(target.getHostOrIp(), target.getPort());
-            SocketChannel channel = new SocketChannel(conn);
-            channel.out.writeUTF("bully");
-            channel.out.writeUTF(message.name());
-            channel.out.writeInt(this.processId);
-            channel.out.flush();
+            MessageChannel channel = messageChannelFactory.getChannel(target.getHostOrIp(), target.getPort());
+            channel.writeString("bully");
+            channel.writeString(message.name());
+            channel.writeInt(this.processId);
             channel.close();
         } catch (IOException e) {
             e.printStackTrace();

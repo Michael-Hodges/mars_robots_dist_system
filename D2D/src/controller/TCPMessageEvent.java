@@ -1,18 +1,18 @@
 package controller;
 
-import model.SocketChannel;
+import model.MessageChannel;
 
 import java.awt.event.ActionEvent;
 
 public class TCPMessageEvent extends ActionEvent {
 
-    SocketChannel channel;
-    public TCPMessageEvent(Object source, int id, SocketChannel channel, String message) {
+    MessageChannel channel;
+    public TCPMessageEvent(Object source, int id, MessageChannel channel, String message) {
         super(source, id, message);
         this.channel = channel;
     }
 
-    public SocketChannel getChannel() {
+    public MessageChannel getChannel() {
         return this.channel;
     }
 }

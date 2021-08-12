@@ -26,12 +26,16 @@ public class PeerImpl implements Peer {
     Thread serverThread;
     List<Peer> peers;
     BullyAlgorithmParticipant selfBullyParticipant;
+    MessageChannelFactory messageChannelFactory;
 
-    public PeerImpl(String hostOrIP, int port) {
+    public PeerImpl(String hostOrIP, int port, MessageChannelFactory messageChannelFactory) {
+
         this.host = hostOrIP;
         this.port = port;
+        this.messageChannelFactory = messageChannelFactory;
         this.peers = new ArrayList<>();
-        this.selfBullyParticipant = new BullyAlgorithmParticipantImpl("localhost", port, port);
+        this.selfBullyParticipant = new BullyAlgorithmParticipantImpl("localhost", port, port,
+                messageChannelFactory);
     }
 
     @Override
@@ -86,12 +90,11 @@ public class PeerImpl implements Peer {
         ActionEvent ev = new ActionEvent(this, 1, "registering");
         listener.actionPerformed(ev);
         try {
-            Socket socket = new Socket(peer.getHostOrIp(), peer.getPort());
-            SocketChannel channel = new SocketChannel(socket);
-            channel.out.writeUTF("peer");
-            channel.out.writeUTF(Message.Register.name());
-            channel.out.writeUTF(this.getHostOrIp());
-            channel.out.writeInt(this.getPort());
+            MessageChannel channel = this.messageChannelFactory.getChannel(peer.getHostOrIp(), peer.getPort());
+            channel.writeString("peer");
+            channel.writeString(Message.Register.name());
+            channel.writeString(this.getHostOrIp());
+            channel.writeInt(this.getPort());
             channel.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -110,8 +113,8 @@ public class PeerImpl implements Peer {
             ElectLeader();
             p = this.selfBullyParticipant.getCoordinator();
         }
-        
-        return new PeerImpl(p.getHostOrIp(), p.getPort());
+
+        return new PeerImpl(p.getHostOrIp(), p.getPort(),this.messageChannelFactory);
     }
 
     @Override
@@ -125,7 +128,7 @@ public class PeerImpl implements Peer {
 
     void addAsBullyParticipant(Peer peer) {
         BullyAlgorithmParticipant p = new BullyAlgorithmParticipantImpl(peer.getHostOrIp(),
-                peer.getPort(), peer.getPort());
+                peer.getPort(), peer.getPort(), this.messageChannelFactory);
         selfBullyParticipant.add(p);
     }
 
@@ -180,7 +183,7 @@ public class PeerImpl implements Peer {
         @Override
         public void actionPerformed(ActionEvent e) {
             TCPMessageEvent event = (TCPMessageEvent)e;
-            SocketChannel channel = event.getChannel();
+            MessageChannel channel = event.getChannel();
             Message m = Message.valueOf(event.getActionCommand());
             switch(m) {
                 case Register:
@@ -194,18 +197,18 @@ public class PeerImpl implements Peer {
             }
         }
 
-        private void onRegister(SocketChannel channel) {
+        private void onRegister(MessageChannel channel) {
             try {
-                String hostOrIp = channel.in.readUTF();
-                int port = channel.in.readInt();
-                Peer p = new PeerImpl(hostOrIp, port);
+                String hostOrIp = channel.readNextString();
+                int port = channel.readNextInt();
+                Peer p = new PeerImpl(hostOrIp, port, messageChannelFactory);
                 PeerImpl.this.add(p);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-        private void onElectLeader(SocketChannel channel) {
+        private void onElectLeader(MessageChannel channel) {
             PeerImpl.this.ElectLeader();
             channel.close();
         }

@@ -3,7 +3,7 @@ package model.bully;
 import controller.TCPMessageEvent;
 import model.Logger;
 import model.ProcessDelegate;
-import model.SocketChannel;
+import model.MessageChannel;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,12 +50,12 @@ public class BullyProcessDelegateImpl implements ProcessDelegate {
         }
 
         private void delegate(TCPMessageEvent event) throws IOException {
-            SocketChannel channel = event.getChannel();
+            MessageChannel channel = event.getChannel();
             BullyAlgorithmParticipantImpl.Message messageType = BullyAlgorithmParticipantImpl.Message.valueOf(event.getActionCommand());
 
             int senderProcessId = 0;
             try {
-                senderProcessId = channel.in.readInt();
+                senderProcessId = channel.readNextInt();
             } catch (IOException e) {
                 e.printStackTrace();
             }

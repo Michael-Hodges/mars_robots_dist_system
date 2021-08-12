@@ -1,7 +1,8 @@
 package controller;
 
 import model.ProcessDelegate;
-import model.SocketChannel;
+import model.MessageChannel;
+import model.TCPMessageChannelImpl;
 
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -60,7 +61,7 @@ public class TCPServer {
     class RequestHandler {
 
         public void delegate(int requestId, Socket conn) {
-            SocketChannel channel = new SocketChannel(conn);
+            MessageChannel channel = new TCPMessageChannelImpl(conn);
             String targetProcess = readUTF(channel);
             String targetMessage = readUTF(channel);
             for (Process p : TCPServer.this.registered) {
@@ -72,9 +73,9 @@ public class TCPServer {
             }
         }
 
-        private String readUTF(SocketChannel channel) {
+        private String readUTF(MessageChannel channel) {
             try {
-                return channel.in.readUTF();
+                return channel.readNextString();
             } catch (IOException e) {
                 log(e.getMessage());
             }
