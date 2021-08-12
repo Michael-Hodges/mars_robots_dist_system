@@ -5,6 +5,8 @@ import view.GuiClient;
 import view.GuiServer;
 
 import java.io.IOException;
+import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Program {
@@ -16,6 +18,9 @@ public class Program {
             startCoordinator(coordinatorPort);
         } else if(args[0].equals("gui_server")) {
             startGUIView();
+        } else if(args[0].equals("bully_election")) {
+            int port = Integer.parseInt(args[1]);
+            startBullyElection(port);
         }
         else {
             String coordinatorHostOrIP = "localhost";
@@ -35,21 +40,54 @@ public class Program {
     }
 
     static void startPeerNode(String coordinatorHostOrIP, int port) {
-        String nodeName = "10.0.0.1";
+        String nodeName = "localhost";
         Coordinator client = new CoordinatorClient(coordinatorHostOrIP, port);
         int clientPort = client.registerNode(nodeName);
+        List<Peer> peers = nodesToPeers(client.getNodes());
+        System.out.println("Received " + peers.size() + " hosts.");
         GuiClient guiClient = new GuiClient(nodeName + ":" + clientPort);
-        NodeImpl impl = new NodeImpl(nodeName, clientPort);
+
+        PeerImpl impl = new PeerImpl(nodeName, clientPort);
+        for(Peer p : peers) {
+            impl.add(p);
+        }
         impl.setListener(guiClient);
-
         impl.start();
-
-        List<String> hosts = client.getNodes();
-        System.out.println("Received " + hosts.size() + " hosts.");
     }
 
     static void startGUIView() {
         GuiServer server = new GuiServer();
         server.start();
+    }
+
+    static void startBullyElection(int port) {
+        System.out.println("Starting bully election");
+        String hostOrIp = "localhost";
+        Socket conn = null;
+        try {
+            conn = new Socket(hostOrIp, port);
+            SocketChannel channel = new SocketChannel(conn);
+            channel.out.writeUTF("bully");
+            channel.out.writeUTF("Start");
+            channel.out.writeInt(0);
+            channel.out.flush();
+            channel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    static List<Peer> nodesToPeers(List<String> nodes) {
+        List<Peer> peers = new ArrayList<>();
+        for(String node : nodes) {
+            peers.add(toPeer(node));
+        }
+        return peers;
+    }
+
+    static Peer toPeer(String node) {
+        String[] elems = node.split(":");
+        return new PeerImpl(elems[0], Integer.parseInt(elems[1]));
     }
 }

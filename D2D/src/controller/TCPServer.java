@@ -24,7 +24,7 @@ public class TCPServer {
         this.requestHandler = new RequestHandler();
     }
 
-    void run() throws IOException {
+    public void run() throws IOException {
 
         ServerSocket server = new ServerSocket(this.port);
         log("Server initialized on port " + port);
@@ -39,7 +39,7 @@ public class TCPServer {
         }
     }
 
-    void register(String processName, ProcessDelegate processDelegate){
+    public void register(String processName, ProcessDelegate processDelegate){
         this.registered.add(new Process(processName, processDelegate));
     }
 

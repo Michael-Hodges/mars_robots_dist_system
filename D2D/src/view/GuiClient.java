@@ -18,10 +18,11 @@ public class GuiClient implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("startServer")) {
+        String cmd = e.getActionCommand();
+        if (cmd.equals("startServer")) {
             onStartServer();
-        } else {
-            onBar();
+        } else if (cmd.startsWith("bully")) {
+            onBully(cmd);
         }
     }
 
@@ -38,10 +39,15 @@ public class GuiClient implements ActionListener {
         }
     }
 
-    private void onBar() {
+    private void onBully(String message) {
         try {
-            this.robot.setColor(0,0,255);
-            this.robot.setLabel(this.identifier + "-onBar");
+            if (message.contains("Victory")) {
+                this.robot.setColor(0,0,255);
+            } else {
+                this.robot.setColor(0,255,0);
+            }
+
+            this.robot.setLabel(this.identifier + " - " + message);
             this.robot.rotate(random.nextInt(360));
             this.robot.move(random.nextInt(200));
         } catch (RemoteException e) {

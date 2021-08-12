@@ -10,6 +10,7 @@ class BullyAlgorithm {
 
     List<BullyAlgorithmParticipant> participants;
     BullyAlgorithmParticipant self;
+    int timeout = 200;
 
     public BullyAlgorithm(BullyAlgorithmParticipant self, List<BullyAlgorithmParticipant> participants) {
         this.self = self;
@@ -25,9 +26,19 @@ class BullyAlgorithm {
                     self.sendElectionMessage(p);
                 }
             }
+            waitForAnswers();
             if (!self.didReceiveAnswerMessages()) {
                 sendVictory();
             }
+        }
+    }
+
+    private void waitForAnswers() {
+        //wait for answers
+        try {
+            Thread.sleep(timeout);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 

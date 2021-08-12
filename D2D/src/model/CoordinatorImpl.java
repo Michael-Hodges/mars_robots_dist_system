@@ -13,7 +13,7 @@ public class CoordinatorImpl implements Coordinator {
     //Note: this method is synchronized to ensure thread safety when assigning ports
     @Override
     public synchronized int registerNode(String nodeName) {
-        int port = 5000;
+        int port = 5001;
         if (registeredNodes.size() > 0) {
             port = getLastRegistered().port + 1;
         }

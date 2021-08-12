@@ -1,0 +1,1 @@
+java -jar ..\out\artifacts\D2D_jar\D2D.jar bully_election 5001
