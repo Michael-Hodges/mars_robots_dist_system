@@ -2,7 +2,7 @@ package model;
 
 import controller.MessageChannel;
 import controller.MessageListenerFactory;
-import controller.ChannelMessageEvent;
+import controller.MessageEvent;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,7 +33,7 @@ public class CoordinatorMessageListenerFactoryImpl implements MessageListenerFac
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            ChannelMessageEvent event = (ChannelMessageEvent)e;
+            MessageEvent event = (MessageEvent)e;
             this.channel = event.getChannel();
             Message message = Message.valueOf(event.getActionCommand());
             try {

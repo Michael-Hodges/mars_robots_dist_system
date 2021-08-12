@@ -1,6 +1,6 @@
 package model.bully;
 
-import controller.ChannelMessageEvent;
+import controller.MessageEvent;
 import model.Logger;
 import controller.MessageListenerFactory;
 import controller.MessageChannel;
@@ -41,7 +41,7 @@ public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
         @Override
         public void actionPerformed(ActionEvent e) {
             log("Received: " + e.getActionCommand());
-            ChannelMessageEvent event = (ChannelMessageEvent)e;
+            MessageEvent event = (MessageEvent)e;
             try {
                 delegate(event);
             } catch (IOException ioException) {
@@ -49,7 +49,7 @@ public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
             }
         }
 
-        private void delegate(ChannelMessageEvent event) throws IOException {
+        private void delegate(MessageEvent event) throws IOException {
             MessageChannel channel = event.getChannel();
             BullyAlgorithmParticipantImpl.Message messageType = BullyAlgorithmParticipantImpl.Message.valueOf(event.getActionCommand());
 

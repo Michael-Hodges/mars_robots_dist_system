@@ -3,7 +3,7 @@ package model;
 import controller.MessageChannel;
 import controller.MessageChannelFactory;
 import controller.MessageListenerFactory;
-import controller.ChannelMessageEvent;
+import controller.MessageEvent;
 import controller.tcp.TCPServer;
 import model.bully.BullyAlgorithmParticipant;
 import model.bully.BullyAlgorithmParticipantImpl;
@@ -184,7 +184,7 @@ public class PeerImpl implements Peer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            ChannelMessageEvent event = (ChannelMessageEvent)e;
+            MessageEvent event = (MessageEvent)e;
             MessageChannel channel = event.getChannel();
             Message m = Message.valueOf(event.getActionCommand());
             switch(m) {

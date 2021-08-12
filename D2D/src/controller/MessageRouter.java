@@ -23,7 +23,7 @@ public class MessageRouter {
         String message = getMessage(channel);
         for (MessageRoute p : this.messageRoutes) {
             if (p.identifier.equals(route)) {
-                ChannelMessageEvent messageEvent = new ChannelMessageEvent(this, requestId, channel, message);
+                MessageEvent messageEvent = new MessageEvent(this, requestId, channel, message);
                 ActionListener messageListener = p.messageListenerFactory.getMessageListener();
                 messageListener.actionPerformed(messageEvent);
             }
