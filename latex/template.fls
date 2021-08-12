@@ -1,4 +1,4 @@
-PWD /Users/hodgesm/Documents/School/2021_Summer/scaleDistSyst_CS6650/hw/final_project/latex
+PWD /Users/hodgesm/Documents/School/2021_Summer/scaleDistSyst_CS6650/hw/mars_robots_dist_system/latex
 INPUT /usr/local/texlive/2020/texmf.cnf
 INPUT /usr/local/texlive/2020/texmf-dist/web2c/texmf.cnf
 INPUT /usr/local/texlive/2020/texmf-var/web2c/pdftex/pdflatex.fmt
@@ -163,10 +163,10 @@ INPUT /usr/local/texlive/2020/texmf-dist/fonts/vf/adobe/courier/pcrr7t.vf
 INPUT /usr/local/texlive/2020/texmf-dist/fonts/tfm/adobe/courier/pcrr8r.tfm
 INPUT /usr/local/texlive/2020/texmf-dist/fonts/vf/adobe/times/ptmb7t.vf
 INPUT /usr/local/texlive/2020/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
-INPUT /usr/local/texlive/2020/texmf-dist/fonts/vf/adobe/times/ptmb.vf
-INPUT /usr/local/texlive/2020/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
 INPUT /usr/local/texlive/2020/texmf-dist/fonts/vf/adobe/times/ptmr7t.vf
 INPUT /usr/local/texlive/2020/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
+INPUT /usr/local/texlive/2020/texmf-dist/fonts/vf/adobe/times/ptmb.vf
+INPUT /usr/local/texlive/2020/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
 INPUT template.aux
 INPUT /usr/local/texlive/2020/texmf-dist/fonts/enc/dvips/base/8r.enc
 INPUT /usr/local/texlive/2020/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb

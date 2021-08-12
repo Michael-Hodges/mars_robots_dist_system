@@ -53,6 +53,15 @@ Northeastern University\\
 %\thispagestyle{empty}
 
 \section{Introduction}
+In this project we propose a distributed system based upon robots exploring a planet such as mars. Robots will be sent to a planet where commands will be sent to the system from an agency, such as NASA, and the commands will be distributed to the appropriate robot. The system will have a simple goal of exploring the planet to collect data. In so doing, each robot will have a relative x and y coordinate that will determine it's position as well as a unique identifier. Since the planet has no infrastructure the robots will be holding all of their communication systems on house and must conserver power. For this reason, the range of transmission will be limited. The robots will keep track of who is in range of them in order to route messages. The robots will need to transmit messages amongst each other to execute commands and send responses. Since NASA will have limited access to the robots on the planet, when the robots are given a command the nodes will need to select a leader to distribute the command to the appropriate robot based on some heuristic.
+
+Some Scenarios we propose to solve are as follows:
+\begin{enumerate}
+    \item [1.] Sending a message to a robot that is out of range.
+    \item [2.] Broadcasting messages to all robots on the planet.
+    \item [3.] Selecting a coordinator on the planet.
+    \item [4.] Concensus? not sure how concensus will fit in....
+\end{enumerate}
 %-------------------------------------------------------------------------
 \section{Algorithms Overview}
 \subsection{Bully Algorithm}
