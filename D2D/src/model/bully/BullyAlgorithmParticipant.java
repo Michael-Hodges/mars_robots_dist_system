@@ -1,6 +1,4 @@
-package model;
-
-import controller.TCPMessageEvent;
+package model.bully;
 
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -14,6 +12,7 @@ public interface BullyAlgorithmParticipant {
     void sendVictory(BullyAlgorithmParticipant p);
     void sendElectionMessage(BullyAlgorithmParticipant p);
     void sendAnswer(BullyAlgorithmParticipant p);
+    void waitForAnswers();
     void onAnswerMessage(int receivedProcessId);
     void onElectionMessage(int receivedProcessIdt) throws IOException;
     void onVictoryMessage(int receivedProcessId);

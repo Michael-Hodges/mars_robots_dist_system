@@ -1,41 +1,29 @@
-package model;
+package model.bully;
 
 import controller.TCPMessageEvent;
+import model.Logger;
+import model.ProcessDelegate;
+import model.SocketChannel;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-public class BullyProcessDelegateImpl implements ProcessDelegate{
+public class BullyProcessDelegateImpl implements ProcessDelegate {
 
     BullyAlgorithmParticipant self;
     ActionListener listener;
 
-    public BullyProcessDelegateImpl(int port) {
+    public BullyProcessDelegateImpl(BullyAlgorithmParticipant self) {
         //We use port as processId since it's coming from the coordinator and guaranteed
         //to be sequential and unique.
-        self = new BullyAlgorithmParticipantImpl("localhost", port, port);
-    }
-
-    public void addParticipant(Peer peer) {
-        self.add(toParticipant(peer));
-    }
-
-    BullyAlgorithmParticipant toParticipant(Peer peer) {
-        return new BullyAlgorithmParticipantImpl(peer.getHostOrIp(), peer.getPort(), peer.getPort());
+        this.self = self;
     }
 
     public void setListener(ActionListener listener) {
         this.listener = listener;
         this.self.setListener(listener);
     }
-
-    public void startElection() {
-        this.self.startElection();
-    }
-
 
     @Override
     public ActionListener onConnection() {
@@ -82,8 +70,6 @@ public class BullyProcessDelegateImpl implements ProcessDelegate{
                 case Victory:
                     self.onVictoryMessage(senderProcessId);
                     break;
-                default:
-                    self.startElection();
             }
         }
 

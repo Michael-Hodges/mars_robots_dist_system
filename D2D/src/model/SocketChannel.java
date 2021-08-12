@@ -14,7 +14,7 @@ public class SocketChannel {
             this.in = new DataInputStream(new BufferedInputStream(conn.getInputStream()));
             this.out = new DataOutputStream(new BufferedOutputStream(conn.getOutputStream()));
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.log(e.getMessage());
         }
     }
 
@@ -24,7 +24,7 @@ public class SocketChannel {
             this.in.close();
             this.conn.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.log(e.getMessage());
         }
     }
 }

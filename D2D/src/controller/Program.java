@@ -67,8 +67,8 @@ public class Program {
         try {
             conn = new Socket(hostOrIp, port);
             SocketChannel channel = new SocketChannel(conn);
-            channel.out.writeUTF("bully");
-            channel.out.writeUTF("Start");
+            channel.out.writeUTF("peer");
+            channel.out.writeUTF("ElectLeader");
             channel.out.writeInt(0);
             channel.out.flush();
             channel.close();

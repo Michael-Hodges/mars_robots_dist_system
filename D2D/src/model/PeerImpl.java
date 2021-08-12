@@ -2,6 +2,9 @@ package model;
 
 import controller.TCPMessageEvent;
 import controller.TCPServer;
+import model.bully.BullyAlgorithmParticipant;
+import model.bully.BullyAlgorithmParticipantImpl;
+import model.bully.BullyProcessDelegateImpl;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,7 +16,8 @@ import java.util.List;
 public class PeerImpl implements Peer {
 
     enum Message {
-        Register
+        Register,
+        ElectLeader
     }
 
     ActionListener listener;
@@ -21,13 +25,13 @@ public class PeerImpl implements Peer {
     int port;
     Thread serverThread;
     List<Peer> peers;
-    BullyProcessDelegateImpl bullyDelegate;
+    BullyAlgorithmParticipant selfBullyParticipant;
 
     public PeerImpl(String hostOrIP, int port) {
         this.host = hostOrIP;
         this.port = port;
         this.peers = new ArrayList<>();
-        this.bullyDelegate = new BullyProcessDelegateImpl(this.port);
+        this.selfBullyParticipant = new BullyAlgorithmParticipantImpl("localhost", port, port);
     }
 
     @Override
@@ -57,6 +61,7 @@ public class PeerImpl implements Peer {
         ActionEvent ev = new ActionEvent(this, 1, "startServer");
         listener.actionPerformed(ev);
 
+        BullyProcessDelegateImpl bullyDelegate = new BullyProcessDelegateImpl(this.selfBullyParticipant);
         bullyDelegate.setListener(listener);
 
         TCPServer server = new TCPServer(this.port);
@@ -94,12 +99,23 @@ public class PeerImpl implements Peer {
     }
 
     @Override
+    public void ElectLeader() {
+        this.selfBullyParticipant.startElection();
+    }
+
+    @Override
     public synchronized void add(Peer peer) {
         if (!peer.equals(this) && !peers.contains(peer)) {
             Logger.log("Added Peer: " + peer);
             peers.add(peer);
-            bullyDelegate.addParticipant(peer);
+            addAsBullyParticipant(peer);
         }
+    }
+
+    void addAsBullyParticipant(Peer peer) {
+        BullyAlgorithmParticipant p = new BullyAlgorithmParticipantImpl(peer.getHostOrIp(),
+                peer.getPort(), peer.getPort());
+        selfBullyParticipant.add(p);
     }
 
     @Override
@@ -155,8 +171,15 @@ public class PeerImpl implements Peer {
             TCPMessageEvent event = (TCPMessageEvent)e;
             SocketChannel channel = event.getChannel();
             Message m = Message.valueOf(event.getActionCommand());
-            if (m == Message.Register) {
-                onRegister(channel);
+            switch(m) {
+                case Register:
+                    onRegister(channel);
+                    break;
+                case ElectLeader:
+                    onElectLeader(channel);
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -169,6 +192,11 @@ public class PeerImpl implements Peer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        private void onElectLeader(SocketChannel channel) {
+            PeerImpl.this.ElectLeader();
+            channel.close();
         }
     }
 }

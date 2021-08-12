@@ -1,7 +1,7 @@
-package model;
+package model.bully;
 
-import controller.TCPMessageEvent;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import model.Logger;
+import model.SocketChannel;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,8 +15,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     enum Message {
         Election,
         Answer,
-        Victory,
-        Start
+        Victory
     }
 
     private static int EVENT_ID_COUNTER = 0;
@@ -27,6 +26,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     private int port;
     private String hostOrIp;
     private ActionListener listener;
+    int timeoutInMilliseconds = 200;
 
     public BullyAlgorithmParticipantImpl(String hostOrIp, int port, int processId) {
         this.hostOrIp = hostOrIp;
@@ -76,6 +76,21 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         this.send(p, Message.Answer);
     }
 
+    @Override
+    public void waitForAnswers() {
+        int sleepTime = 10;
+        int totalSleepTime = 0;
+        while (totalSleepTime < timeoutInMilliseconds){
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            totalSleepTime += sleepTime;
+            sleepTime *= 2;
+        }
+    }
+
     public void onAnswerMessage(int receivedProcessId) {
         countOfAnswers++;
         if (receivedProcessId > this.getProcessId()) {
@@ -93,6 +108,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     }
 
     public void onVictoryMessage(int receivedProcessId) {
+        log("Leader: " + receivedProcessId);
         this.coordinator = this.lookup(receivedProcessId);
     }
 
@@ -120,8 +136,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
 
 
     private void awaitVictoryMessage() {
-        //we do nothing - if we don't get a victory message
-        //by the time we're through then we'll start over.
+        //we just await our victory
     }
 
     private BullyAlgorithmParticipant lookup(int processId) {
