@@ -1,11 +1,12 @@
 package controller;
 
+import controller.tcp.TCPMessageChannelImpl;
+import controller.tcp.TCPServer;
 import model.*;
 import view.GuiClient;
 import view.GuiServer;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class Program {
     static void startCoordinator(int port) {
         Coordinator impl = new CoordinatorImpl();
         TCPServer server = new TCPServer(port);
-        server.register("coordinator", new CoordinatorProcessDelegateImpl(impl));
+        server.register("coordinator", new CoordinatorMessageListenerFactoryImpl(impl));
         try {
             server.run();
         } catch (IOException e) {

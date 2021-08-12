@@ -1,20 +1,20 @@
 package model.bully;
 
-import controller.TCPMessageEvent;
+import controller.ChannelMessageEvent;
 import model.Logger;
-import model.ProcessDelegate;
-import model.MessageChannel;
+import controller.MessageListenerFactory;
+import controller.MessageChannel;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 
-public class BullyProcessDelegateImpl implements ProcessDelegate {
+public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
 
     BullyAlgorithmParticipant self;
     ActionListener listener;
 
-    public BullyProcessDelegateImpl(BullyAlgorithmParticipant self) {
+    public BullyMessageListenerFactoryImpl(BullyAlgorithmParticipant self) {
         //We use port as processId since it's coming from the coordinator and guaranteed
         //to be sequential and unique.
         this.self = self;
@@ -26,7 +26,7 @@ public class BullyProcessDelegateImpl implements ProcessDelegate {
     }
 
     @Override
-    public ActionListener onConnection() {
+    public ActionListener getMessageListener() {
         return new BullyProcess(self);
     }
 
@@ -41,7 +41,7 @@ public class BullyProcessDelegateImpl implements ProcessDelegate {
         @Override
         public void actionPerformed(ActionEvent e) {
             log("Received: " + e.getActionCommand());
-            TCPMessageEvent event = (TCPMessageEvent)e;
+            ChannelMessageEvent event = (ChannelMessageEvent)e;
             try {
                 delegate(event);
             } catch (IOException ioException) {
@@ -49,7 +49,7 @@ public class BullyProcessDelegateImpl implements ProcessDelegate {
             }
         }
 
-        private void delegate(TCPMessageEvent event) throws IOException {
+        private void delegate(ChannelMessageEvent event) throws IOException {
             MessageChannel channel = event.getChannel();
             BullyAlgorithmParticipantImpl.Message messageType = BullyAlgorithmParticipantImpl.Message.valueOf(event.getActionCommand());
 

@@ -1,10 +1,13 @@
 package model;
 
-import controller.TCPMessageEvent;
-import controller.TCPServer;
+import controller.MessageChannel;
+import controller.MessageChannelFactory;
+import controller.MessageListenerFactory;
+import controller.ChannelMessageEvent;
+import controller.tcp.TCPServer;
 import model.bully.BullyAlgorithmParticipant;
 import model.bully.BullyAlgorithmParticipantImpl;
-import model.bully.BullyProcessDelegateImpl;
+import model.bully.BullyMessageListenerFactoryImpl;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,7 +26,6 @@ public class PeerImpl implements Peer {
     ActionListener listener;
     String host;
     int port;
-    Thread serverThread;
     List<Peer> peers;
     BullyAlgorithmParticipant selfBullyParticipant;
     MessageChannelFactory messageChannelFactory;
@@ -65,11 +67,11 @@ public class PeerImpl implements Peer {
         ActionEvent ev = new ActionEvent(this, 1, "startServer");
         listener.actionPerformed(ev);
 
-        BullyProcessDelegateImpl bullyDelegate = new BullyProcessDelegateImpl(this.selfBullyParticipant);
+        BullyMessageListenerFactoryImpl bullyDelegate = new BullyMessageListenerFactoryImpl(this.selfBullyParticipant);
         bullyDelegate.setListener(listener);
 
         TCPServer server = new TCPServer(this.port);
-        server.register("peer", new PeerProcessDelegate());
+        server.register("peer", new PeerMessageListenerFactory());
         server.register("bully", bullyDelegate);
         try {
             registerWithPeers();
@@ -170,10 +172,10 @@ public class PeerImpl implements Peer {
         return this.getHostAndPort();
     }
 
-    class PeerProcessDelegate implements ProcessDelegate {
+    class PeerMessageListenerFactory implements MessageListenerFactory {
 
         @Override
-        public ActionListener onConnection() {
+        public ActionListener getMessageListener() {
             return new PeerProcess();
         }
     }
@@ -182,7 +184,7 @@ public class PeerImpl implements Peer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            TCPMessageEvent event = (TCPMessageEvent)e;
+            ChannelMessageEvent event = (ChannelMessageEvent)e;
             MessageChannel channel = event.getChannel();
             Message m = Message.valueOf(event.getActionCommand());
             switch(m) {

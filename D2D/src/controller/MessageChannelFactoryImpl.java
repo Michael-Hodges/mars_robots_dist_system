@@ -1,4 +1,6 @@
-package model;
+package controller;
+
+import controller.tcp.TCPMessageChannelImpl;
 
 import java.io.IOException;
 

@@ -1,14 +1,12 @@
 package model.bully;
 
 import model.Logger;
-import model.MessageChannel;
-import model.MessageChannelFactory;
-import model.TCPMessageChannelImpl;
+import controller.MessageChannel;
+import controller.MessageChannelFactory;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 

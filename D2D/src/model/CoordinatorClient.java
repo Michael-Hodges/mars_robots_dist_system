@@ -1,7 +1,9 @@
 package model;
 
+import controller.MessageChannel;
+import controller.tcp.TCPMessageChannelImpl;
+
 import java.io.*;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -59,7 +61,7 @@ public class CoordinatorClient implements Coordinator{
             try {
                 log("Registering: " + nodeName);
                 channel.writeString("coordinator");
-                channel.writeString(CoordinatorProcessDelegateImpl.Message.Register.name());
+                channel.writeString(CoordinatorMessageListenerFactoryImpl.Message.Register.name());
                 channel.writeString(nodeName);
                 channel.flush();
                 this.port = channel.readNextInt();
@@ -83,7 +85,7 @@ public class CoordinatorClient implements Coordinator{
             try {
                 log("Retrieving hosts...");
                 channel.writeString("coordinator");
-                channel.writeString(CoordinatorProcessDelegateImpl.Message.GetNodes.name());
+                channel.writeString(CoordinatorMessageListenerFactoryImpl.Message.GetNodes.name());
                 channel.flush();
 
                 int nodeCount = channel.readNextInt();

@@ -1,6 +1,8 @@
 package model;
 
-import controller.TCPMessageEvent;
+import controller.MessageChannel;
+import controller.MessageListenerFactory;
+import controller.ChannelMessageEvent;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -8,7 +10,7 @@ import java.io.*;
 import java.util.List;
 
 
-public class CoordinatorProcessDelegateImpl implements ProcessDelegate {
+public class CoordinatorMessageListenerFactoryImpl implements MessageListenerFactory {
 
     enum Message {
         Register,
@@ -16,12 +18,12 @@ public class CoordinatorProcessDelegateImpl implements ProcessDelegate {
     }
 
     Coordinator coordinator;
-    public CoordinatorProcessDelegateImpl(Coordinator coordinator) {
+    public CoordinatorMessageListenerFactoryImpl(Coordinator coordinator) {
         this.coordinator = coordinator;
     }
 
     @Override
-    public ActionListener onConnection() {
+    public ActionListener getMessageListener() {
         return new CoordinatorProcess();
     }
 
@@ -31,7 +33,7 @@ public class CoordinatorProcessDelegateImpl implements ProcessDelegate {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            TCPMessageEvent event = (TCPMessageEvent)e;
+            ChannelMessageEvent event = (ChannelMessageEvent)e;
             this.channel = event.getChannel();
             Message message = Message.valueOf(event.getActionCommand());
             try {
@@ -59,16 +61,16 @@ public class CoordinatorProcessDelegateImpl implements ProcessDelegate {
 
         private void onRegister() throws IOException {
             String hostOrIp = channel.readNextString();
-            CoordinatorProcessDelegateImpl.this.log("Registering node: " + hostOrIp);
-            int port = CoordinatorProcessDelegateImpl.this.coordinator.registerNode(hostOrIp);
-            CoordinatorProcessDelegateImpl.this.log("Registering port: " + port);
+            CoordinatorMessageListenerFactoryImpl.this.log("Registering node: " + hostOrIp);
+            int port = CoordinatorMessageListenerFactoryImpl.this.coordinator.registerNode(hostOrIp);
+            CoordinatorMessageListenerFactoryImpl.this.log("Registering port: " + port);
             channel.writeInt(port);
             channel.flush();
         }
 
         private void onGetNodes() throws IOException {
-            CoordinatorProcessDelegateImpl.this.log("Retrieving nodes...");
-            List<String> nodes = CoordinatorProcessDelegateImpl.this.coordinator.getNodes();
+            CoordinatorMessageListenerFactoryImpl.this.log("Retrieving nodes...");
+            List<String> nodes = CoordinatorMessageListenerFactoryImpl.this.coordinator.getNodes();
             channel.writeInt(nodes.size());
             for (String node : nodes) {
                 channel.writeString(node);

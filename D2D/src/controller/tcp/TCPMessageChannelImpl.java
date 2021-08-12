@@ -1,8 +1,10 @@
-package model;
+package controller.tcp;
+
+import model.Logger;
+import controller.MessageChannel;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class TCPMessageChannelImpl implements MessageChannel {
     private Socket conn;

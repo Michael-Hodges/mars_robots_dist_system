@@ -1,7 +1,6 @@
-package model;
+package controller;
 
 import java.io.*;
-import java.net.Socket;
 
 public interface MessageChannel {
     void writeString(String s) throws IOException;
