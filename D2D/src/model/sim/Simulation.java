@@ -33,7 +33,7 @@ public class Simulation {
         Peer p = randomPeer();
         this.peerClient.startLeaderElection(p.getHostOrIp(), p.getPort());
         Logger.log(p.toString());
-        //this.chaosClient.blockRoute(p.getHostOrIp(), p.getPort(), "bully");
+        this.chaosClient.blockRoute(p.getHostOrIp(), p.getPort(), "bully");
     }
 
     private void setRegisteredPeers() {

@@ -66,8 +66,13 @@ public class PeerImpl implements Peer {
         BullyMessageListenerFactoryImpl bullyDelegate = new BullyMessageListenerFactoryImpl(this.selfBullyParticipant);
         bullyDelegate.setListener(listener);
 
-        MessageRouter chaosMessageRouter = new TCPChaosMessageRouterImpl();
-        TCPServer server = new TCPServer(this.port, chaosMessageRouter);
+        RouteStrategy routeStrategy = new RouteStrategyImpl();
+        TCPChaosMessageRouteImpl chaosRouteStrategy = new TCPChaosMessageRouteImpl(routeStrategy);
+
+        MessageRouterImpl messageRouter = new MessageRouterImpl(chaosRouteStrategy);
+        messageRouter.registerRoute(chaosRouteStrategy.getRoute());
+
+        TCPServer server = new TCPServer(this.port, messageRouter);
 
 
         server.register("peer", new PeerMessageListenerFactory());

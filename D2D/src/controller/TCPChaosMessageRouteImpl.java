@@ -5,23 +5,26 @@ import model.sim.ChaosOperation;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.nio.channels.Channel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TCPChaosMessageRouterImpl extends MessageRouterImpl implements ChaosMessageRouter {
+public class TCPChaosMessageRouteImpl implements ChaosMessageRouter, RouteStrategy {
 
+    RouteStrategy wrappedRouteStrategy;
     List<String> blockedRoutes;
 
-    public TCPChaosMessageRouterImpl() {
+    public TCPChaosMessageRouteImpl(RouteStrategy routeStrategy) {
+        this.wrappedRouteStrategy = routeStrategy;
         this.blockedRoutes = new ArrayList<>();
-        MessageRoute route = new MessageRoute("chaos", new ChaosListenerFactory());
-        this.registerRoute(route);
+    }
+
+    public MessageRoute getRoute() {
+        return new MessageRoute("chaos", new ChaosListenerFactory());
     }
 
     @Override
     public String getRoute(MessageChannel channel) {
-        String route = super.getRoute(channel);
+        String route = wrappedRouteStrategy.getRoute(channel);
         if (this.blockedRoutes.contains(route)) {
             log(route + " message was blocked.");
             return "blocked";
@@ -73,11 +76,11 @@ public class TCPChaosMessageRouterImpl extends MessageRouterImpl implements Chao
         }
 
         void onBlockMessage(MessageChannel channel) {
-            TCPChaosMessageRouterImpl.this.blockRoute(readRoute(channel));
+            TCPChaosMessageRouteImpl.this.blockRoute(readRoute(channel));
         }
 
         void onUnblockMessage(MessageChannel channel) {
-            TCPChaosMessageRouterImpl.this.unblockRoute(readRoute(channel));
+            TCPChaosMessageRouteImpl.this.unblockRoute(readRoute(channel));
         }
 
         String readRoute(MessageChannel channel) {
