@@ -3,8 +3,10 @@ package controller;
 import controller.tcp.TCPMessageChannelImpl;
 import controller.tcp.TCPServer;
 import model.*;
-import view.GuiClient;
-import view.GuiServer;
+import model.sim.ChaosClient;
+import model.sim.Simulation;
+import view.PeerEventHandler;
+import view.DashboardServer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ public class Program {
     //This program can run either as the coordinator or as a peer
     public static void main(String[] args) {
         int coordinatorPort = 5000;
+        String coordinatorHostOrIP = "localhost";
         if (args[0].equals("coordinator")) {
             startCoordinator(coordinatorPort);
         } else if(args[0].equals("gui_server")) {
@@ -22,9 +25,10 @@ public class Program {
         } else if(args[0].equals("bully_election")) {
             int port = Integer.parseInt(args[1]);
             startBullyElection(port);
+        } else if (args[0].equals("simulation")) {
+            startSimulation(coordinatorHostOrIP, coordinatorPort);
         }
         else {
-            String coordinatorHostOrIP = "localhost";
             startPeerNode(coordinatorHostOrIP, coordinatorPort);
         }
     }
@@ -46,33 +50,35 @@ public class Program {
         int clientPort = client.registerNode(nodeName);
         List<Peer> peers = nodesToPeers(client.getNodes());
         System.out.println("Received " + peers.size() + " hosts.");
-        GuiClient guiClient = new GuiClient(nodeName + ":" + clientPort);
+        PeerEventHandler peerEventHandler = new PeerEventHandler(nodeName + ":" + clientPort);
         MessageChannelFactory messageChannelFactory = new MessageChannelFactoryImpl();
         PeerImpl impl = new PeerImpl(nodeName, clientPort, messageChannelFactory);
         for(Peer p : peers) {
             impl.add(p);
         }
-        impl.setListener(guiClient);
+        impl.setListener(peerEventHandler);
         impl.start();
     }
 
     static void startGUIView() {
-        GuiServer server = new GuiServer();
+        DashboardServer server = new DashboardServer();
         server.start();
     }
 
     static void startBullyElection(int port) {
         System.out.println("Starting bully election");
         String hostOrIp = "localhost";
-        try {
-            MessageChannel channel = new TCPMessageChannelImpl(hostOrIp, port);
-            channel.writeString("peer");
-            channel.writeString("ElectLeader");
-            channel.writeInt(0);
-            channel.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        PeerClient client = new PeerClient(new MessageChannelFactoryImpl());
+        client.startLeaderElection(hostOrIp, port);
+    }
+
+    static void startSimulation(String coordinatorHostOrIP, int port) {
+        MessageChannelFactory messageChannelFactory = new MessageChannelFactoryImpl();
+        Coordinator coordinator = new CoordinatorClient(coordinatorHostOrIP, port);
+        ChaosClient chaosClient = new ChaosClient(messageChannelFactory);
+        PeerClient peerClient = new PeerClient(messageChannelFactory);
+        Simulation simulation = new Simulation(coordinator, chaosClient, peerClient);
+        simulation.start();
     }
 
 

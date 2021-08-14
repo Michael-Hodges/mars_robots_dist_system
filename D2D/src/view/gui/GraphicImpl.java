@@ -6,9 +6,11 @@ import java.awt.*;
 public class GraphicImpl implements Graphics {
 
     Graphics2D wrappedGraphics;
+    Font font = new Font("TimesRoman", Font.BOLD, 24);
 
     public GraphicImpl(java.awt.Graphics graphics) {
         this.wrappedGraphics = (Graphics2D)graphics;
+        this.wrappedGraphics.setFont(font);
     }
 
     @Override
@@ -18,11 +20,14 @@ public class GraphicImpl implements Graphics {
     }
 
     @Override
-    public void writeText(int x, int y, String msg) {
-        wrappedGraphics.drawString(msg, x, y);
+    public void writeText(int x, int y, String msg, Color color) {
+        int width = this.wrappedGraphics.getFontMetrics().stringWidth(msg);
+        this.wrappedGraphics.setColor(color);
+        wrappedGraphics.drawString(msg, x - (width/2), y); //center text
     }
 
     public void setCurrent(java.awt.Graphics graphics) {
         this.wrappedGraphics = (Graphics2D)graphics;
+        this.wrappedGraphics.setFont(font);
     }
 }
