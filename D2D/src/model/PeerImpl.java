@@ -131,6 +131,11 @@ public class PeerImpl implements Peer {
         }
     }
 
+    @Override
+    public List<Peer> getPeers() {
+        return this.peers;
+    }
+
     void addAsBullyParticipant(Peer peer) {
         BullyAlgorithmParticipant p = new BullyAlgorithmParticipantImpl(peer.getHostOrIp(),
                 peer.getPort(), peer.getPort(), this.messageChannelFactory);
