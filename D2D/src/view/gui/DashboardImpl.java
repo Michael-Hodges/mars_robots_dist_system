@@ -50,7 +50,6 @@ public class DashboardImpl extends JPanel implements Dashboard {
     void refreshLayout() {
         double entityScale = 0.5;
         List<Entity> entities = this.world.getEntities();
-        int nEntities = entities.size();
         int nGrid = (int)Math.ceil(Math.sqrt(entities.size()));
         int squareSize = (int)((this.world.width * 0.9) / nGrid);
         int squareMiddleOffset = (int)(squareDiagonal(squareSize) / 2);

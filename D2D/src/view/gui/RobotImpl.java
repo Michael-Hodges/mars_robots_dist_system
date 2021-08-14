@@ -19,7 +19,7 @@ public class RobotImpl implements Entity, Robot {
     private Color upColor = Color.green;
     private Color downColor = Color.red;
     private Color leaderColor = Color.yellow;
-    private Color textColor;
+    private Color textColor = Color.BLACK;
     private Random random = new Random();
     private String label = null;
     RobotStatus status;

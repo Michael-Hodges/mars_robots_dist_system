@@ -61,14 +61,18 @@ public class PeerImpl implements Peer {
 
         //implement it here - send to new interruptable thread
         //set this.serverThread to new thread
-        ActionEvent ev = new ActionEvent(this, 1, "startServer");
-        listener.actionPerformed(ev);
+        sendEventToListener(PeerEvent.StartServer);
 
         BullyMessageListenerFactoryImpl bullyDelegate = new BullyMessageListenerFactoryImpl(this.selfBullyParticipant);
         bullyDelegate.setListener(listener);
 
-        MessageRouter chaosMessageRouter = new TCPChaosMessageRouterImpl();
-        TCPServer server = new TCPServer(this.port, chaosMessageRouter);
+        RouteStrategy routeStrategy = new RouteStrategyImpl();
+        TCPChaosMessageRouteImpl chaosRouteStrategy = new TCPChaosMessageRouteImpl(routeStrategy);
+
+        MessageRouterImpl messageRouter = new MessageRouterImpl(chaosRouteStrategy);
+        messageRouter.registerRoute(chaosRouteStrategy.getRoute());
+
+        TCPServer server = new TCPServer(this.port, messageRouter);
 
 
         server.register("peer", new PeerMessageListenerFactory());
@@ -89,8 +93,7 @@ public class PeerImpl implements Peer {
 
     @Override
     public void sendRegisterRequestTo(Peer peer) {
-        ActionEvent ev = new ActionEvent(this, 1, "registering");
-        listener.actionPerformed(ev);
+        sendEventToListener(PeerEvent.Register);
         try {
             MessageChannel channel = this.messageChannelFactory.getChannel(peer.getHostOrIp(), peer.getPort());
             channel.writeString("peer");
@@ -128,6 +131,11 @@ public class PeerImpl implements Peer {
         }
     }
 
+    @Override
+    public List<Peer> getPeers() {
+        return this.peers;
+    }
+
     void addAsBullyParticipant(Peer peer) {
         BullyAlgorithmParticipant p = new BullyAlgorithmParticipantImpl(peer.getHostOrIp(),
                 peer.getPort(), peer.getPort(), this.messageChannelFactory);
@@ -153,9 +161,13 @@ public class PeerImpl implements Peer {
 
     private void stopServer() {
         //interrupt and stop this.serverThread
-        ActionEvent ev = new ActionEvent(this, 1, "stopServer");
+    }
+
+    private void sendEventToListener(PeerEvent event) {
+        ActionEvent ev = new ActionEvent(this, 1, event.toString());
         listener.actionPerformed(ev);
     }
+
 
     // get and return the TCP socket
     private Socket connect(String hostOrIP, int port) {

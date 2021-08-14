@@ -7,8 +7,14 @@ import java.util.List;
 
 public class MessageRouterImpl implements MessageRouter {
     List<MessageRoute> messageRoutes;
+    RouteStrategy routeStrategy;
 
     public MessageRouterImpl() {
+        this(new RouteStrategyImpl());
+    }
+
+    public MessageRouterImpl(RouteStrategy routeStrategy) {
+        this.routeStrategy = routeStrategy;
         this.messageRoutes = new ArrayList<>();
     }
 
@@ -31,12 +37,7 @@ public class MessageRouterImpl implements MessageRouter {
     }
 
     public String getRoute(MessageChannel channel) {
-        try {
-            return channel.readNextString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return routeStrategy.getRoute(channel);
     }
 
     private String getMessage(MessageChannel channel) {

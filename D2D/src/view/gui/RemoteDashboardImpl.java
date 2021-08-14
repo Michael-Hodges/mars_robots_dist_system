@@ -13,11 +13,11 @@ public class RemoteDashboardImpl implements RemoteDashboard {
     }
 
     @Override
-    public RemoteRobot addRobot() throws RemoteException {
-        view.gui.Robot r = (view.gui.Robot)new view.gui.RobotImpl("R1", 0, 0);
+    public RemoteRobot addRobot(String label) throws RemoteException {
+        view.gui.Robot r = (view.gui.Robot)new view.gui.RobotImpl(label, 0, 0);
         RemoteRobot rr = new RemoteRobotImpl(r);
         s.addEntity(r);
-        RMIRegistry.register(rr, "r" + n);
+        RMIRegistry.register(rr, label);
         n++;
         return rr;
     }

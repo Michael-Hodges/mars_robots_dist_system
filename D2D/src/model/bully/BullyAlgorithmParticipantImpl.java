@@ -3,6 +3,7 @@ package model.bully;
 import model.Logger;
 import controller.MessageChannel;
 import controller.MessageChannelFactory;
+import model.PeerEvent;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,6 +51,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     public void startElection() {
         this.countOfAnswers = 0; //reset count
         BullyAlgorithm algorithm = new BullyAlgorithm(this, otherParticipants);
+        sendEventToListener(PeerEvent.BullyStartElection);
         algorithm.start();
     }
 
@@ -99,6 +101,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         if (receivedProcessId > this.getProcessId()) {
             awaitVictoryMessage();
         }
+        sendEventToListener(PeerEvent.BullyReceiveAnswer);
     }
 
 
@@ -108,11 +111,13 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
             sendAnswer(p);
             startElection();
         }
+        sendEventToListener(PeerEvent.BullyReceiveElectionMessage);
     }
 
     public void onVictoryMessage(int receivedProcessId) {
         log("Leader: " + receivedProcessId);
         this.coordinator = this.lookup(receivedProcessId);
+        sendEventToListener(PeerEvent.BullyReceiveVictory);
     }
 
 
@@ -137,7 +142,6 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     }
 
 
-
     private void awaitVictoryMessage() {
         //we just await our victory
     }
@@ -154,7 +158,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
 
     private void send(BullyAlgorithmParticipant target, Message message) {
         log(message.name());
-        this.sendToListener(message);
+        sendMessageToListener(message);
         try {
             MessageChannel channel = messageChannelFactory.getChannel(target.getHostOrIp(), target.getPort());
             channel.writeString("bully");
@@ -166,11 +170,29 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         }
     }
 
-    private void sendToListener(Message message) {
+    private void sendMessageToListener(Message message) {
+        PeerEvent event = toPeerEvent(message);
+        sendEventToListener(event);
+    }
+
+    private void sendEventToListener(PeerEvent event) {
         int id = BullyAlgorithmParticipantImpl.EVENT_ID_COUNTER++;
         if (this.listener != null) {
-            BullyEvent event = new BullyEvent(this, id, "bully " + message.name());
-            this.listener.actionPerformed(event);
+            ActionEvent e = new ActionEvent(this, id, event.toString());
+            this.listener.actionPerformed(e);
+        }
+    }
+
+    private PeerEvent toPeerEvent(Message message) {
+        switch(message) {
+            case Answer:
+                return PeerEvent.BullySendAnswer;
+            case Election:
+                return PeerEvent.BullySendElectionMessage;
+            case Victory:
+                return PeerEvent.BullySendVictory;
+            default:
+                return PeerEvent.Unknown;
         }
     }
 
@@ -179,10 +201,4 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         Logger.log(msg);
     }
 
-    class BullyEvent extends ActionEvent {
-
-        public BullyEvent(Object source, int id, String command) {
-            super(source, id, command);
-        }
-    }
 }
