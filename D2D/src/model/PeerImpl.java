@@ -61,8 +61,7 @@ public class PeerImpl implements Peer {
 
         //implement it here - send to new interruptable thread
         //set this.serverThread to new thread
-        ActionEvent ev = new ActionEvent(this, 1, "startServer");
-        listener.actionPerformed(ev);
+        sendEventToListener(PeerEvent.StartServer);
 
         BullyMessageListenerFactoryImpl bullyDelegate = new BullyMessageListenerFactoryImpl(this.selfBullyParticipant);
         bullyDelegate.setListener(listener);
@@ -89,8 +88,7 @@ public class PeerImpl implements Peer {
 
     @Override
     public void sendRegisterRequestTo(Peer peer) {
-        ActionEvent ev = new ActionEvent(this, 1, "registering");
-        listener.actionPerformed(ev);
+        sendEventToListener(PeerEvent.Register);
         try {
             MessageChannel channel = this.messageChannelFactory.getChannel(peer.getHostOrIp(), peer.getPort());
             channel.writeString("peer");
@@ -153,9 +151,13 @@ public class PeerImpl implements Peer {
 
     private void stopServer() {
         //interrupt and stop this.serverThread
-        ActionEvent ev = new ActionEvent(this, 1, "stopServer");
+    }
+
+    private void sendEventToListener(PeerEvent event) {
+        ActionEvent ev = new ActionEvent(this, 1, event.toString());
         listener.actionPerformed(ev);
     }
+
 
     // get and return the TCP socket
     private Socket connect(String hostOrIP, int port) {

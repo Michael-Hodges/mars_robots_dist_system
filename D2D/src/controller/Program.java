@@ -50,9 +50,11 @@ public class Program {
         int clientPort = client.registerNode(nodeName);
         List<Peer> peers = nodesToPeers(client.getNodes());
         System.out.println("Received " + peers.size() + " hosts.");
-        PeerEventHandler peerEventHandler = new PeerEventHandler(nodeName + ":" + clientPort);
+
         MessageChannelFactory messageChannelFactory = new MessageChannelFactoryImpl();
         PeerImpl impl = new PeerImpl(nodeName, clientPort, messageChannelFactory);
+        PeerEventHandler peerEventHandler = new PeerEventHandler(impl);
+
         for(Peer p : peers) {
             impl.add(p);
         }

@@ -1,7 +1,11 @@
 package view;
 
+import model.Peer;
+import model.PeerEvent;
+import model.PeerImpl;
 import view.gui.RemoteRobot;
 import view.gui.RemoteDashboard;
+import view.gui.RobotStatus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,50 +15,57 @@ import java.util.Random;
 public class PeerEventHandler implements ActionListener {
     private static Random random = new Random();
     RemoteRobot robot;
-    String identifier;
-    public PeerEventHandler(String identifier) {
-        this.identifier = identifier;
+    Peer peer;
+    public PeerEventHandler(Peer peer) {
+        this.peer = peer;
+        setRobotDashboardWidget();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String cmd = e.getActionCommand();
-        if (cmd.equals("startServer")) {
-            onStartServer();
-        } else if (cmd.startsWith("bully")) {
-            onBully(cmd);
+        String message = e.getActionCommand();
+        PeerEvent operation = PeerEvent.valueOf(message);
+        switch(operation) {
+            case BullySendVictory:
+                onBecomeLeader();
+                break;
+            case BullyReceiveVictory:
+                onBecomeParticipant();
+                break;
+            default:
+                break;
         }
     }
 
-    private void onStartServer() {
+    private void setRobotDashboardWidget() {
         try {
         RemoteDashboard s = (RemoteDashboard) RMIRegistry.retrieve("localhost", "dashboard");
-        this.robot = s.addRobot();
-        this.robot.setLabel(this.identifier);
-        this.robot.setColor(0,255, 0);
-        this.robot.rotate(random.nextInt(360));
-        this.robot.move(random.nextInt(200));
+        String identifier = getIdentifier();
+        Logger.log("Registering with dashboard " + identifier);
+        this.robot = s.addRobot(identifier);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
-    private void onBully(String message) {
+    private void onBecomeLeader() {
+        setRobotStatus(RobotStatus.Leader);
+    }
+
+    private void onBecomeParticipant() {
+        setRobotStatus(RobotStatus.Up);
+    }
+
+    private void setRobotStatus(RobotStatus status) {
         try {
-            if (message.contains("Victory")) {
-                this.robot.setColor(0,0,255);
-            } else {
-                this.robot.setColor(0,255,0);
-            }
-
-            this.robot.setLabel(this.identifier + " - " + message);
-            this.robot.rotate(random.nextInt(360));
-            this.robot.move(random.nextInt(200));
+            this.robot.setStatus(status);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-
     }
 
+    private String getIdentifier() {
+        return Integer.toString(peer.getPort());
+    }
 
 }
