@@ -1,21 +1,20 @@
 package view.gui;
 
 import view.RMIRegistry;
-import view.gui.*;
 
 import java.rmi.RemoteException;
 
-public class RemoteSimulationImpl implements RemoteSimulation {
+public class RemoteDashboardImpl implements RemoteDashboard {
 
-    Simulation s;
+    Dashboard s;
     int n = 0;
-    public RemoteSimulationImpl(Simulation s) {
+    public RemoteDashboardImpl(Dashboard s) {
         this.s = s;
     }
 
     @Override
     public RemoteRobot addRobot(int x, int y) throws RemoteException {
-        view.gui.Robot r = (view.gui.Robot)new view.gui.RobotImpl(x, y, 0);
+        view.gui.Robot r = (view.gui.Robot)new view.gui.RobotImpl("R1", x, y);
         RemoteRobot rr = new RemoteRobotImpl(r);
         s.addEntity(r);
         RMIRegistry.register(rr, "r" + n);

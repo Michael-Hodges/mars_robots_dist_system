@@ -1,6 +1,6 @@
 package view.gui;
 
-public interface Simulation {
+public interface Dashboard {
     void start();
     void addEntity(Entity e);
 }

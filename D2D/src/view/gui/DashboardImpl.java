@@ -2,12 +2,12 @@ package view.gui;
 
 import javax.swing.*;
 
-public class SimulationImpl extends JPanel implements Simulation {
+public class DashboardImpl extends JPanel implements Dashboard {
 
     GraphicImpl graphics;
     World world;
 
-    public SimulationImpl() {
+    public DashboardImpl() {
         this.graphics = null;
         this.world = new World();
     }
