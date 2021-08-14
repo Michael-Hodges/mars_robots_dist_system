@@ -4,5 +4,5 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface RemoteDashboard extends Remote {
-    RemoteRobot addRobot(int x, int y) throws RemoteException;
+    RemoteRobot addRobot() throws RemoteException;
 }

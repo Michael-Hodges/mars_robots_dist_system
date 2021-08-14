@@ -11,12 +11,17 @@ public class TCPServer {
 
     int requestCounter = 0;
     int port;
-    MessageRouterImpl messageRouter;
+    MessageRouter messageRouter;
 
 
     public TCPServer(int port) {
         this.port = port;
         this.messageRouter = new MessageRouterImpl();
+    }
+
+    public TCPServer(int port, MessageRouter messageRouter) {
+        this.port = port;
+        this.messageRouter = messageRouter;
     }
 
     public void run() throws IOException {

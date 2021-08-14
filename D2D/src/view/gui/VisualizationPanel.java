@@ -10,7 +10,7 @@ public class VisualizationPanel {
         frame.add(dashboard);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
-        dashboard.start();
         frame.setVisible(true);
+        dashboard.start();
     }
 }

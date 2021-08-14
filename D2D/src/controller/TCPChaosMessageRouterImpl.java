@@ -9,32 +9,21 @@ import java.nio.channels.Channel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TCPChaosMessageRouterImpl implements ChaosMessageRouter {
+public class TCPChaosMessageRouterImpl extends MessageRouterImpl implements ChaosMessageRouter {
 
-    MessageRouter wrappedRouter;
     List<String> blockedRoutes;
 
-    public TCPChaosMessageRouterImpl(MessageRouter wrappedRouter) {
-        this.wrappedRouter = wrappedRouter;
+    public TCPChaosMessageRouterImpl() {
         this.blockedRoutes = new ArrayList<>();
         MessageRoute route = new MessageRoute("chaos", new ChaosListenerFactory());
         this.registerRoute(route);
     }
 
     @Override
-    public void registerRoute(MessageRoute messageRoute) {
-        this.wrappedRouter.registerRoute(messageRoute);
-    }
-
-    @Override
-    public void route(int requestId, MessageChannel channel) {
-        this.wrappedRouter.route(requestId, channel);
-    }
-
-    @Override
     public String getRoute(MessageChannel channel) {
-        String route = this.wrappedRouter.getRoute(channel);
+        String route = super.getRoute(channel);
         if (this.blockedRoutes.contains(route)) {
+            log(route + " message was blocked.");
             return "blocked";
         }
         return route;
@@ -45,12 +34,14 @@ public class TCPChaosMessageRouterImpl implements ChaosMessageRouter {
     public void blockRoute(String route) {
         if (!this.blockedRoutes.contains(route)) {
             this.blockedRoutes.add(route);
+            log("Enabling block for " + route + " messages.");
         }
     }
 
     @Override
     public void unblockRoute(String route) {
         this.blockedRoutes.remove(route);
+        log("Disabling block for " + route + " messages.");
     }
 
 
@@ -98,8 +89,11 @@ public class TCPChaosMessageRouterImpl implements ChaosMessageRouter {
             }
             return route;
         }
+
     }
 
-
+    void log(String message) {
+        Logger.log(message);
+    }
 
 }

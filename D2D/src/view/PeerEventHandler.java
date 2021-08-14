@@ -29,7 +29,7 @@ public class PeerEventHandler implements ActionListener {
     private void onStartServer() {
         try {
         RemoteDashboard s = (RemoteDashboard) RMIRegistry.retrieve("localhost", "dashboard");
-        this.robot = s.addRobot(500,500);
+        this.robot = s.addRobot();
         this.robot.setLabel(this.identifier);
         this.robot.setColor(0,255, 0);
         this.robot.rotate(random.nextInt(360));

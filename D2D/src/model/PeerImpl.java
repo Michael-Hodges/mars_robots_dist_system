@@ -1,9 +1,6 @@
 package model;
 
-import controller.MessageChannel;
-import controller.MessageChannelFactory;
-import controller.MessageListenerFactory;
-import controller.MessageEvent;
+import controller.*;
 import controller.tcp.TCPServer;
 import model.bully.BullyAlgorithmParticipant;
 import model.bully.BullyAlgorithmParticipantImpl;
@@ -70,7 +67,10 @@ public class PeerImpl implements Peer {
         BullyMessageListenerFactoryImpl bullyDelegate = new BullyMessageListenerFactoryImpl(this.selfBullyParticipant);
         bullyDelegate.setListener(listener);
 
-        TCPServer server = new TCPServer(this.port);
+        MessageRouter chaosMessageRouter = new TCPChaosMessageRouterImpl();
+        TCPServer server = new TCPServer(this.port, chaosMessageRouter);
+
+
         server.register("peer", new PeerMessageListenerFactory());
         server.register("bully", bullyDelegate);
         try {

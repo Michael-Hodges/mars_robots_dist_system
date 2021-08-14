@@ -10,8 +10,8 @@ public class ViewTestArea {
     static Random random = new Random();
 
     public static void main(String[] args) {
-        DashboardImpl simulation = new DashboardImpl();
-        int n = 4;
+        DashboardImpl dashboard = new DashboardImpl();
+        int n = 8;
         List<Robot> robots = new ArrayList<>();
         for (int i = 0 ; i < n; i++) {
             Robot r = new RobotImpl("R" + i, 100 + (100 * i),100 + (100 * i));
@@ -24,10 +24,10 @@ public class ViewTestArea {
                 r.addPeer("R" + j);
             }
             robots.add(r);
-            simulation.addEntity(r);
+            dashboard.addEntity(r);
         }
 
         VisualizationPanel panel = new VisualizationPanel();
-        panel.start(simulation);
+        panel.start(dashboard);
     }
 }
