@@ -93,8 +93,8 @@ public interface BullyAlgorithmParticipant {
     int getPort();
 
     /**
-     * Set the actionlistener to use for this participant
+     * Add the actionlistener to use for this participant
      * @param listener Listener to use for this participant
      */
-    void setListener(ActionListener listener);
+    void addListener(ActionListener listener);
 }

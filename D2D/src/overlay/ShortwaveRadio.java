@@ -1,5 +1,10 @@
 package overlay;
 
+import model.ActionPeerEvent;
+import model.PeerEvent;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -19,6 +24,7 @@ public class ShortwaveRadio implements Runnable
     private int y;
     //private BroadcastListener multiCastListener;
     private BroadcastListener multiCastListener;
+    private ActionListener listener;
 
     public ShortwaveRadio(int localPort, UUID identify, int xCoords, int yCoords) throws IOException
     {
@@ -26,14 +32,19 @@ public class ShortwaveRadio implements Runnable
         this.uID = identify;
         this.localPort = localPort;
         this.localSocket = new DatagramSocket(this.localPort);
-        this.multiCastPort = 5000;
+        this.multiCastPort = 6000;
         this.multiCastSubnet = InetAddress.getByName("228.5.6.7");
         this.idPortMap = new HashMap<>();
         this.x = xCoords;
         this.y = yCoords;
         this.multiCastListener = new BroadcastListener(this.x, this.y, this.multiCastPort, this.localPort, this.multiCastSubnet, this.uID, this.idPortMap);
         this.msgIds = new ArrayList<>();
+        this.listener = null;
         new Thread(this.multiCastListener).start();
+    }
+
+    public void setListener(ActionListener listener) {
+        this.listener = listener;
     }
 
     public void ping() throws IOException
@@ -67,6 +78,7 @@ public class ShortwaveRadio implements Runnable
                     UUID receivedUUID = UUID.fromString(splitRecvData[0]);
                     int receivedPort = Integer.parseInt(splitRecvData[1]);
                     this.idPortMap.put(receivedUUID, receivedPort);
+                    this.sendEventToListener(PeerEvent.ShortwaveRadioPing);
                     uuidHolder.add(receivedUUID);
                 }
             }
@@ -109,6 +121,14 @@ public class ShortwaveRadio implements Runnable
         this.multiCastListener.updateCoords(this.x, this.y);
     }
 
+    private void sendEventToListener(PeerEvent peerEvent) {
+        if (this.listener != null) {
+            ActionPeerEvent event = new ActionPeerEvent(this, 1, peerEvent);
+            this.listener.actionPerformed(event);
+        }
+    }
+
+
     public void run()
     {
         int count = 0;
@@ -119,7 +139,7 @@ public class ShortwaveRadio implements Runnable
                 ping();
                 Thread.sleep(3000); // cast ping every 3 seconds to update
                 //can add code here to send out multicast messages we want
-                runMulticast(new String[]{"multicast", this.uID.toString(), String.valueOf(count), "this is a message"});
+                //runMulticast(new String[]{"multicast", this.uID.toString(), String.valueOf(count), "this is a message"});
                 count++;
             }
             catch (IOException | InterruptedException e)

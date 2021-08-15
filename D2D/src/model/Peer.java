@@ -6,7 +6,7 @@ import java.util.List;
 
 
 /**
- * Peer interface, for communication between peers in mars.
+ * Peer interface, for communication between peers on mars.
  */
 public interface Peer {
     /**
@@ -39,6 +39,8 @@ public interface Peer {
      */
     void sendRegisterRequestTo(Peer peer);
 
+    void discoverLocalGroup();
+
     /**
      * Action to electLeader in bully algorithm
      */
@@ -61,4 +63,6 @@ public interface Peer {
      * @return list of this peers neighbors
      */
     List<Peer> getPeers();
+    PeerImpl.Status getStatus();
+    void setStatus(PeerImpl.Status status);
 }

@@ -30,7 +30,8 @@ public class Program {
             int port = Integer.parseInt(args[1]);
             startBullyElection(port);
         } else if (args[0].equals("simulation")) {
-            startSimulation(coordinatorHostOrIP, coordinatorPort);
+            Simulation.Scenario scenario = Simulation.Scenario.valueOf(args[1]);
+            startSimulation(coordinatorHostOrIP, coordinatorPort, scenario);
         }
         else {
             startPeerNode(coordinatorHostOrIP, coordinatorPort);
@@ -68,11 +69,10 @@ public class Program {
         MessageChannelFactory messageChannelFactory = new MessageChannelFactoryImpl();
         PeerImpl impl = new PeerImpl(nodeName, clientPort, messageChannelFactory);
         PeerEventHandler peerEventHandler = new PeerEventHandler(impl);
-
+        impl.setListener(peerEventHandler);
         for(Peer p : peers) {
             impl.add(p);
         }
-        impl.setListener(peerEventHandler);
         impl.start();
     }
 
@@ -95,19 +95,21 @@ public class Program {
         client.startLeaderElection(hostOrIp, port);
     }
 
+
     /**
      * Starts the simulation with a coordinator at the given host/ip and port, using a chaos
      * client and peer client.
      * @param coordinatorHostOrIP host/ip to use for the coordinator
      * @param port port to use for the coordinator
+     * @param scenario sim scenario to execute
      */
-    static void startSimulation(String coordinatorHostOrIP, int port) {
+    static void startSimulation(String coordinatorHostOrIP, int port, Simulation.Scenario scenario) {
         MessageChannelFactory messageChannelFactory = new MessageChannelFactoryImpl();
         Coordinator coordinator = new CoordinatorClient(coordinatorHostOrIP, port);
         ChaosClient chaosClient = new ChaosClient(messageChannelFactory);
         PeerClient peerClient = new PeerClient(messageChannelFactory);
         Simulation simulation = new Simulation(coordinator, chaosClient, peerClient);
-        simulation.start();
+        simulation.start(scenario);
     }
 
     /**

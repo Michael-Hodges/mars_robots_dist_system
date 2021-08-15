@@ -15,7 +15,6 @@ import java.io.IOException;
 public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
 
     BullyAlgorithmParticipant self;
-    ActionListener listener;
 
     /**
      * Constructs new MessageListenerFactory with self set as given participant.
@@ -27,14 +26,6 @@ public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
         this.self = self;
     }
 
-    /**
-     * Assign the listener to the self participant
-     * @param listener listener to assign to the participant
-     */
-    public void setListener(ActionListener listener) {
-        this.listener = listener;
-        this.self.setListener(listener);
-    }
 
     @Override
     public ActionListener getMessageListener() {
