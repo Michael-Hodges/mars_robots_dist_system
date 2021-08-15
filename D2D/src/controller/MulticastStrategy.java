@@ -27,9 +27,9 @@ public class MulticastStrategy implements RouteStrategy{
   }
 
   private void multicast(MessageChannel channel){
-
+    // read out from the channel
     for (Peer p: this.peer.getPeers()){
-
+      //send the info to the peers
     }
   }
 

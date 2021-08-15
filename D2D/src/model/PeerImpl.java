@@ -11,13 +11,17 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class PeerImpl implements Peer {
 
     public enum Operation {
         Register,
-        ElectLeader
+        ElectLeader,
+        MulticastRegister,
+        MulticastElectLeader
     }
 
     ActionListener listener;
@@ -26,6 +30,7 @@ public class PeerImpl implements Peer {
     List<Peer> peers;
     BullyAlgorithmParticipant selfBullyParticipant;
     MessageChannelFactory messageChannelFactory;
+    MulticastSession multicastSession;
 
     public PeerImpl(String hostOrIP, int port, MessageChannelFactory messageChannelFactory) {
 
@@ -35,6 +40,7 @@ public class PeerImpl implements Peer {
         this.peers = new ArrayList<>();
         this.selfBullyParticipant = new BullyAlgorithmParticipantImpl("localhost", port, port,
                 messageChannelFactory);
+        this.multicastSession = new MulticastSession();
     }
 
     @Override
@@ -206,6 +212,12 @@ public class PeerImpl implements Peer {
                 case ElectLeader:
                     onElectLeader(channel);
                     break;
+                case MulticastElectLeader:
+                    onMulticastElectLeader(channel);
+                    break;
+                case MulticastRegister:
+                    onMulticastRegister(channel);
+                    break;
                 default:
                     break;
             }
@@ -226,5 +238,101 @@ public class PeerImpl implements Peer {
             PeerImpl.this.electLeader();
             channel.close();
         }
+
+        // on multicast takes channel
+        // turn it into an action event
+        // store id's in list
+        // peer multicastelectleader/multicastregister 234423 register/electleader data1 data2
+        //
+
+        private void onMulticastElectLeader(MessageChannel channel){
+            try {
+                int id = channel.readNextInt();
+                if(PeerImpl.this.multicastSession.isIDUsed(id)){
+                    channel.close();
+                    return;
+                }
+                PeerImpl.this.multicastSession.addUsedId(id);
+                Operation m = Operation.valueOf(channel.readNextString());
+                PeerImpl.this.electLeader();
+                channel.close();
+                for (Peer p : PeerImpl.this.peers){
+                    MessageChannel newChannel = getMessageChannel(p);
+                    newChannel.writeString("peer");
+                    newChannel.writeString(Operation.MulticastElectLeader.name());
+                    newChannel.writeInt(id);
+                    newChannel.writeString(m.name());
+                    newChannel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        // onmulticastelectleader
+
+
+        // onmulticastregister
+        private void onMulticastRegister(MessageChannel channel){
+            try {
+                int id = channel.readNextInt();
+                if(PeerImpl.this.multicastSession.isIDUsed(id)){
+                    channel.close();
+                    return;
+                }
+                PeerImpl.this.multicastSession.addUsedId(id);
+                Operation m = Operation.valueOf(channel.readNextString());
+                String hostOrIp = channel.readNextString();
+                int port = channel.readNextInt();
+                Peer p = new PeerImpl(hostOrIp, port, messageChannelFactory);
+                PeerImpl.this.add(p);
+                for (Peer peer: PeerImpl.this.peers) {
+                    MessageChannel newChannel = getMessageChannel(peer);
+                    newChannel.writeString("peer");
+                    newChannel.writeString(Operation.MulticastElectLeader.name());
+                    newChannel.writeInt(id);
+                    newChannel.writeString(m.name());
+                    newChannel.writeString(hostOrIp);
+                    newChannel.writeInt(port);
+                    newChannel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        //
+
+        private MessageChannel getMessageChannel(Peer peer){
+            try {
+                return PeerImpl.this.messageChannelFactory.getChannel(peer.getHostOrIp(),
+                        peer.getPort());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+    }
+
+
+    class MulticastSession {
+        private int id = 0;
+        Set<Integer> usedIds = new HashSet<>();
+
+        // Since each node will have its own id counter, check to make sure current id is
+        // not in the usedId set
+        public synchronized int getNextId() {
+            while(this.usedIds.contains(this.id)) {
+                this.id++;
+            }
+            return this.id;
+        }
+
+        public synchronized void addUsedId(int id) {
+            this.usedIds.add(id);
+        }
+
+        public synchronized boolean isIDUsed(int id){
+            return usedIds.contains(id);
+        }
+
     }
 }
