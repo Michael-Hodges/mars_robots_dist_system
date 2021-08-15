@@ -48,4 +48,17 @@ public class PeerClient {
             e.printStackTrace();
         }
     }
+
+    public void multicastRelocate(String hostOrIp, int port, int x, int y) {
+        try {
+            MessageChannel channel = messageChannelFactory.getChannel(hostOrIp, port);
+            channel.writeString("peer");
+            channel.writeString(PeerImpl.Operation.InitiateMulticastUpdatePosition.name());
+            channel.writeInt(x);
+            channel.writeInt(y);
+            channel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -38,7 +38,9 @@ public class PeerImpl implements Peer, ActionListener {
         UpdatePosition,
         IdentifyLocalGroup,
         MulticastRegister,
-        MulticastElectLeader
+        MulticastElectLeader,
+        MulticastUpdatePosition,
+        InitiateMulticastUpdatePosition
     }
 
     public enum Status {
@@ -374,6 +376,12 @@ public class PeerImpl implements Peer, ActionListener {
                 case UpdatePosition:
                     onUpdatePosition(channel);
                     break;
+                case MulticastUpdatePosition:
+                    onMulticastUpdatePosition(channel);
+                    break;
+                case InitiateMulticastUpdatePosition:
+                    onInitiateMulticastUpdatePosition(channel);
+                    break;
                 default:
                     break;
             }
@@ -412,11 +420,55 @@ public class PeerImpl implements Peer, ActionListener {
             }
         }
 
+        private void onMulticastUpdatePosition(MessageChannel channel) {
+            try {
+                int id = channel.readNextInt();
+                if(PeerImpl.this.multicastSession.isIDUsed(id)) {
+                    channel.close();
+                    return;
+                }
+                PeerImpl.this.multicastSession.addUsedId(id);
+                int x = channel.readNextInt();
+                int y = channel.readNextInt();
+                channel.close();
+                PeerImpl.this.updatePosition(x, y);
+                for (Peer p : PeerImpl.this.peers){
+                    MessageChannel newChannel = getMessageChannel(p);
+                    newChannel.writeString("peer");
+                    newChannel.writeString(Operation.MulticastUpdatePosition.name());
+                    newChannel.writeInt(id);
+                    newChannel.writeInt(x);
+                    newChannel.writeInt(y);
+                    newChannel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void onInitiateMulticastUpdatePosition(MessageChannel channel) {
+            try {
+                int x = channel.readNextInt();
+                int y = channel.readNextInt();
+                channel.close();
+                int id = PeerImpl.this.multicastSession.getNextId();
+                MessageChannel newChannel = getMessageChannel(PeerImpl.this);
+                newChannel.writeString("peer");
+                newChannel.writeString(Operation.MulticastUpdatePosition.name());
+                newChannel.writeInt(id);
+                newChannel.writeInt(x);
+                newChannel.writeInt(y);
+                newChannel.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         // on multicast takes channel
         // turn it into an action event
         // store id's in list
-        // peer multicastelectleader/multicastregister 234423 register/electleader data1 data2
+        // peer multicastelectleader/multicastregister 234423 data1 data2
         //
 
         private void onMulticastElectLeader(MessageChannel channel){
@@ -427,7 +479,6 @@ public class PeerImpl implements Peer, ActionListener {
                     return;
                 }
                 PeerImpl.this.multicastSession.addUsedId(id);
-                Operation m = Operation.valueOf(channel.readNextString());
                 PeerImpl.this.electLeader();
                 channel.close();
                 for (Peer p : PeerImpl.this.peers){
@@ -435,7 +486,6 @@ public class PeerImpl implements Peer, ActionListener {
                     newChannel.writeString("peer");
                     newChannel.writeString(Operation.MulticastElectLeader.name());
                     newChannel.writeInt(id);
-                    newChannel.writeString(m.name());
                     newChannel.close();
                 }
             } catch (IOException e) {
@@ -454,7 +504,6 @@ public class PeerImpl implements Peer, ActionListener {
                     return;
                 }
                 PeerImpl.this.multicastSession.addUsedId(id);
-                Operation m = Operation.valueOf(channel.readNextString());
                 String hostOrIp = channel.readNextString();
                 int port = channel.readNextInt();
                 Peer p = new PeerImpl(hostOrIp, port, messageChannelFactory);
@@ -464,7 +513,6 @@ public class PeerImpl implements Peer, ActionListener {
                     newChannel.writeString("peer");
                     newChannel.writeString(Operation.MulticastElectLeader.name());
                     newChannel.writeInt(id);
-                    newChannel.writeString(m.name());
                     newChannel.writeString(hostOrIp);
                     newChannel.writeInt(port);
                     newChannel.close();

@@ -15,7 +15,8 @@ public class Simulation {
 
     public enum Scenario {
         Multicast,
-        LeaderElection
+        LeaderElection,
+        GoHome
     }
 
     static Random random = new Random();
@@ -42,6 +43,9 @@ public class Simulation {
             case LeaderElection:
                 electLeader();
                 break;
+            case GoHome:
+                movePeersHome();
+                break;
             default:
                 break;
         }
@@ -66,6 +70,22 @@ public class Simulation {
             Logger.log("Moving " + p + " to (" + x + ", " + y + ")");
             this.peerClient.relocate(p.getHostOrIp(), p.getPort(), x, y);
         }
+    }
+
+    private void movePeersHome() {
+        movePeers();
+        Logger.log("Sleeping for 2 seconds to allow peers to move");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Logger.log("Multicasting peers to return to base");
+        Peer p = randomPeer();
+        // set home to a random location
+        int x = random.nextInt(1000);
+        int y = random.nextInt(1000);
+        this.peerClient.multicastRelocate(p.getHostOrIp(), p.getPort(), x, y);
     }
 
 
