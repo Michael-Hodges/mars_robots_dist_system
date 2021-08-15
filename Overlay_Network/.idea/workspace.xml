@@ -2,8 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1157874e-a4d0-497f-b80c-b15d3311288e" name="Default Changelist" comment="">
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/../D2D/src/controller/MulticastStrategy.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/controller/MulticastStrategy.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/../D2D/src/model/Peer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/model/Peer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../D2D/src/model/PeerImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/model/PeerImpl.java" afterDir="false" />
+>>>>>>> 9bace1839486fabcf090d741f879b38ca2b0525b
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -112,7 +117,11 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1628965147244</updated>
+<<<<<<< HEAD
       <workItem from="1628965148632" duration="3259000" />
+=======
+      <workItem from="1628965148632" duration="2352000" />
+>>>>>>> 9bace1839486fabcf090d741f879b38ca2b0525b
     </task>
     <servers />
   </component>
