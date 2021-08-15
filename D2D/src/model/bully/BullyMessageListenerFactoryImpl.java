@@ -9,17 +9,28 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 
+/**
+ * MessageListener Factory for the BullyAlgorithm
+ */
 public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
 
     BullyAlgorithmParticipant self;
     ActionListener listener;
 
+    /**
+     * Constructs new MessageListenerFactory with self set as given participant.
+     * @param self participant to assign the listener to
+     */
     public BullyMessageListenerFactoryImpl(BullyAlgorithmParticipant self) {
         //We use port as processId since it's coming from the coordinator and guaranteed
         //to be sequential and unique.
         this.self = self;
     }
 
+    /**
+     * Assign the listener to the self participant
+     * @param listener listener to assign to the participant
+     */
     public void setListener(ActionListener listener) {
         this.listener = listener;
         this.self.setListener(listener);
@@ -31,9 +42,17 @@ public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
     }
 
 
+    /**
+     * ActionListener/MessageListener for the bully algorithm
+     */
     class BullyProcess implements ActionListener {
 
         BullyAlgorithmParticipant self;
+
+        /**
+         * Constructs new BullyProcess action listener with a given participant
+         * @param self participant which will be taking actions
+         */
         BullyProcess(BullyAlgorithmParticipant self) {
             this.self = self;
         }
@@ -49,6 +68,11 @@ public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
             }
         }
 
+        /**
+         * Determines which method to call on the self participant given the event
+         * @param event event for the participant to take
+         * @throws IOException JAva socket/io errors
+         */
         private void delegate(MessageEvent event) throws IOException {
             MessageChannel channel = event.getChannel();
             BullyAlgorithmParticipantImpl.Message messageType = BullyAlgorithmParticipantImpl.Message.valueOf(event.getActionCommand());
@@ -73,6 +97,10 @@ public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
             }
         }
 
+        /**
+         * Logs a string
+         * @param message string to log
+         */
         void log(String message) {
             Logger.log(message);
         }

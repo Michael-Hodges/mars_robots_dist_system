@@ -11,8 +11,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Concrete implementation of a member of the bully algorithm
+ */
 public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
 
+    /**
+     * Message types for the bully algorithm
+     */
     enum Message {
         Election,
         Answer,
@@ -30,6 +36,13 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     int timeoutInMilliseconds = 200;
     private MessageChannelFactory messageChannelFactory;
 
+    /**
+     * Constructs a new bully algorithm participant
+     * @param hostOrIp host/ip to use for this participant
+     * @param port port to use for this participant
+     * @param processId processId to use for this participant
+     * @param messageChannelFactory messagechannelFactory to use for this participant
+     */
     public BullyAlgorithmParticipantImpl(String hostOrIp, int port, int processId,
                                          MessageChannelFactory messageChannelFactory) {
         this.hostOrIp = hostOrIp;
@@ -96,6 +109,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         }
     }
 
+    @Override
     public void onAnswerMessage(int receivedProcessId) {
         countOfAnswers++;
         if (receivedProcessId > this.getProcessId()) {
@@ -104,7 +118,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         sendEventToListener(PeerEvent.BullyReceiveAnswer);
     }
 
-
+    @Override
     public void onElectionMessage(int receivedProcessId) {
         if (receivedProcessId < this.getProcessId()) {
             BullyAlgorithmParticipant p = lookup(receivedProcessId);
@@ -114,12 +128,12 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         sendEventToListener(PeerEvent.BullyReceiveElectionMessage);
     }
 
+    @Override
     public void onVictoryMessage(int receivedProcessId) {
         log("Leader: " + receivedProcessId);
         this.coordinator = this.lookup(receivedProcessId);
         sendEventToListener(PeerEvent.BullyReceiveVictory);
     }
-
 
     @Override
     public boolean didReceiveAnswerMessages() {
@@ -146,6 +160,11 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         //we just await our victory
     }
 
+    /**
+     * Returns the participant object from list of other participants based on id
+     * @param processId participant id to find
+     * @return participant with given id
+     */
     private BullyAlgorithmParticipant lookup(int processId) {
         for(BullyAlgorithmParticipant p : this.otherParticipants) {
             if (p.getProcessId() == processId) {
@@ -155,7 +174,11 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         throw new IllegalArgumentException("Unable to find Bully participant with " + processId);
     }
 
-
+    /**
+     * Sends a given message to the given target, using message channels.
+     * @param target participant to send a message to
+     * @param message message to send to the participant
+     */
     private void send(BullyAlgorithmParticipant target, Message message) {
         log(message.name());
         sendMessageToListener(message);
@@ -170,11 +193,19 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         }
     }
 
+    /**
+     * Sends a given message to the listener as a PeerEvent
+     * @param message message to send to the listener
+     */
     private void sendMessageToListener(Message message) {
         PeerEvent event = toPeerEvent(message);
         sendEventToListener(event);
     }
 
+    /**
+     * Sends a given peerevent to the listener
+     * @param event event to send to the listener
+     */
     private void sendEventToListener(PeerEvent event) {
         int id = BullyAlgorithmParticipantImpl.EVENT_ID_COUNTER++;
         if (this.listener != null) {
@@ -183,6 +214,11 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         }
     }
 
+    /**
+     * Converts message into a peerEvent
+     * @param message message to translate
+     * @return peer event version of the message
+     */
     private PeerEvent toPeerEvent(Message message) {
         switch(message) {
             case Answer:
@@ -196,7 +232,10 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         }
     }
 
-
+    /**
+     * Logs a given string
+     * @param msg string to log
+     */
     private void log(String msg) {
         Logger.log(msg);
     }
