@@ -1,9 +1,6 @@
 package model;
 
-import controller.MessageChannel;
-import controller.MessageChannelFactory;
-import controller.MessageListenerFactory;
-import controller.MessageEvent;
+import controller.*;
 import controller.tcp.TCPServer;
 import model.bully.BullyAlgorithmParticipant;
 import model.bully.BullyAlgorithmParticipantImpl;
@@ -18,7 +15,7 @@ import java.util.List;
 
 public class PeerImpl implements Peer {
 
-    enum Message {
+    public enum Operation {
         Register,
         ElectLeader
     }
@@ -64,13 +61,20 @@ public class PeerImpl implements Peer {
 
         //implement it here - send to new interruptable thread
         //set this.serverThread to new thread
-        ActionEvent ev = new ActionEvent(this, 1, "startServer");
-        listener.actionPerformed(ev);
+        sendEventToListener(PeerEvent.StartServer);
 
         BullyMessageListenerFactoryImpl bullyDelegate = new BullyMessageListenerFactoryImpl(this.selfBullyParticipant);
         bullyDelegate.setListener(listener);
 
-        TCPServer server = new TCPServer(this.port);
+        RouteStrategy routeStrategy = new RouteStrategyImpl();
+        TCPChaosMessageRouteImpl chaosRouteStrategy = new TCPChaosMessageRouteImpl(routeStrategy);
+
+        MessageRouterImpl messageRouter = new MessageRouterImpl(chaosRouteStrategy);
+        messageRouter.registerRoute(chaosRouteStrategy.getRoute());
+
+        TCPServer server = new TCPServer(this.port, messageRouter);
+
+
         server.register("peer", new PeerMessageListenerFactory());
         server.register("bully", bullyDelegate);
         try {
@@ -89,12 +93,11 @@ public class PeerImpl implements Peer {
 
     @Override
     public void sendRegisterRequestTo(Peer peer) {
-        ActionEvent ev = new ActionEvent(this, 1, "registering");
-        listener.actionPerformed(ev);
+        sendEventToListener(PeerEvent.Register);
         try {
             MessageChannel channel = this.messageChannelFactory.getChannel(peer.getHostOrIp(), peer.getPort());
             channel.writeString("peer");
-            channel.writeString(Message.Register.name());
+            channel.writeString(Operation.Register.name());
             channel.writeString(this.getHostOrIp());
             channel.writeInt(this.getPort());
             channel.close();
@@ -104,15 +107,15 @@ public class PeerImpl implements Peer {
     }
 
     @Override
-    public void ElectLeader() {
+    public void electLeader() {
         this.selfBullyParticipant.startElection();
     }
 
     @Override
-    public Peer GetLeader() {
+    public Peer getLeader() {
         BullyAlgorithmParticipant p = this.selfBullyParticipant.getCoordinator();
         if (p == null) {
-            ElectLeader();
+            electLeader();
             p = this.selfBullyParticipant.getCoordinator();
         }
 
@@ -126,6 +129,11 @@ public class PeerImpl implements Peer {
             peers.add(peer);
             addAsBullyParticipant(peer);
         }
+    }
+
+    @Override
+    public List<Peer> getPeers() {
+        return this.peers;
     }
 
     void addAsBullyParticipant(Peer peer) {
@@ -153,9 +161,13 @@ public class PeerImpl implements Peer {
 
     private void stopServer() {
         //interrupt and stop this.serverThread
-        ActionEvent ev = new ActionEvent(this, 1, "stopServer");
+    }
+
+    private void sendEventToListener(PeerEvent event) {
+        ActionEvent ev = new ActionEvent(this, 1, event.toString());
         listener.actionPerformed(ev);
     }
+
 
     // get and return the TCP socket
     private Socket connect(String hostOrIP, int port) {
@@ -186,7 +198,7 @@ public class PeerImpl implements Peer {
         public void actionPerformed(ActionEvent e) {
             MessageEvent event = (MessageEvent)e;
             MessageChannel channel = event.getChannel();
-            Message m = Message.valueOf(event.getActionCommand());
+            Operation m = Operation.valueOf(event.getActionCommand());
             switch(m) {
                 case Register:
                     onRegister(channel);
@@ -211,7 +223,7 @@ public class PeerImpl implements Peer {
         }
 
         private void onElectLeader(MessageChannel channel) {
-            PeerImpl.this.ElectLeader();
+            PeerImpl.this.electLeader();
             channel.close();
         }
     }
