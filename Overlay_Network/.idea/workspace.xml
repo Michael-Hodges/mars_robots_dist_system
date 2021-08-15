@@ -2,20 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1157874e-a4d0-497f-b80c-b15d3311288e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../D2D/src/controller/ChaosMessageRouter.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/controller/ChaosMessageRouter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/controller/MessageRouterImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/controller/MessageRouterImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/controller/Program.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/controller/Program.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/controller/TCPChaosMessageRouterImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/model/Peer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/model/Peer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/model/PeerImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/model/PeerImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/model/bully/BullyAlgorithmParticipantImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/model/bully/BullyAlgorithmParticipantImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/view/PeerEventHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/view/PeerEventHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/view/gui/DashboardImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/view/gui/DashboardImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/view/gui/RemoteDashboard.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/view/gui/RemoteDashboard.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/view/gui/RemoteDashboardImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/view/gui/RemoteDashboardImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/view/gui/RemoteRobot.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/view/gui/RemoteRobot.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/view/gui/RemoteRobotImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/view/gui/RemoteRobotImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../D2D/src/view/gui/RobotImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/view/gui/RobotImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../D2D/src/controller/MulticastStrategy.java" beforeDir="false" afterPath="$PROJECT_DIR$/../D2D/src/controller/MulticastStrategy.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -124,7 +112,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1628965147244</updated>
-      <workItem from="1628965148632" duration="2378000" />
+      <workItem from="1628965148632" duration="3259000" />
     </task>
     <servers />
   </component>
