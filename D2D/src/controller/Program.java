@@ -26,7 +26,8 @@ public class Program {
             int port = Integer.parseInt(args[1]);
             startBullyElection(port);
         } else if (args[0].equals("simulation")) {
-            startSimulation(coordinatorHostOrIP, coordinatorPort);
+            Simulation.Scenario scenario = Simulation.Scenario.valueOf(args[1]);
+            startSimulation(coordinatorHostOrIP, coordinatorPort, scenario);
         }
         else {
             startPeerNode(coordinatorHostOrIP, coordinatorPort);
@@ -73,13 +74,13 @@ public class Program {
         client.startLeaderElection(hostOrIp, port);
     }
 
-    static void startSimulation(String coordinatorHostOrIP, int port) {
+    static void startSimulation(String coordinatorHostOrIP, int port, Simulation.Scenario scenario) {
         MessageChannelFactory messageChannelFactory = new MessageChannelFactoryImpl();
         Coordinator coordinator = new CoordinatorClient(coordinatorHostOrIP, port);
         ChaosClient chaosClient = new ChaosClient(messageChannelFactory);
         PeerClient peerClient = new PeerClient(messageChannelFactory);
         Simulation simulation = new Simulation(coordinator, chaosClient, peerClient);
-        simulation.start();
+        simulation.start(scenario);
     }
 
 

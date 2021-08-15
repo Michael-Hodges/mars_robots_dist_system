@@ -139,7 +139,7 @@ public class ShortwaveRadio implements Runnable
                 ping();
                 Thread.sleep(3000); // cast ping every 3 seconds to update
                 //can add code here to send out multicast messages we want
-                runMulticast(new String[]{"multicast", this.uID.toString(), String.valueOf(count), "this is a message"});
+                //runMulticast(new String[]{"multicast", this.uID.toString(), String.valueOf(count), "this is a message"});
                 count++;
             }
             catch (IOException | InterruptedException e)

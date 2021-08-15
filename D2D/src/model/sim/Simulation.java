@@ -13,6 +13,11 @@ import java.util.Random;
 
 public class Simulation {
 
+    public enum Scenario {
+        Multicast,
+        LeaderElection
+    }
+
     static Random random = new Random();
 
     Coordinator coordinator;
@@ -28,9 +33,18 @@ public class Simulation {
         this.peers = new ArrayList<>();
     }
 
-    public void start() {
+    public void start(Scenario scenario) {
         setRegisteredPeers();
-        movePeers();
+        switch(scenario) {
+            case Multicast:
+                movePeers();
+                break;
+            case LeaderElection:
+                electLeader();
+                break;
+            default:
+                break;
+        }
 
         //this.chaosClient.blockRoute(p.getHostOrIp(), p.getPort(), "bully");
     }
