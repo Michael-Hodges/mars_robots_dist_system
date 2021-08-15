@@ -54,11 +54,10 @@ public class Program {
         MessageChannelFactory messageChannelFactory = new MessageChannelFactoryImpl();
         PeerImpl impl = new PeerImpl(nodeName, clientPort, messageChannelFactory);
         PeerEventHandler peerEventHandler = new PeerEventHandler(impl);
-
+        impl.setListener(peerEventHandler);
         for(Peer p : peers) {
             impl.add(p);
         }
-        impl.setListener(peerEventHandler);
         impl.start();
     }
 

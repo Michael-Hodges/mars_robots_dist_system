@@ -1,5 +1,6 @@
 package model.bully;
 
+import model.ActionPeerEvent;
 import model.Logger;
 import controller.MessageChannel;
 import controller.MessageChannelFactory;
@@ -12,6 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
+
+    public enum Status {
+        Up,
+        Down,
+        Leader,
+        Unknown,
+    }
 
     enum Message {
         Election,
@@ -26,9 +34,10 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     private int countOfAnswers;
     private int port;
     private String hostOrIp;
-    private ActionListener listener;
+    private List<ActionListener> listeners;
     int timeoutInMilliseconds = 200;
     private MessageChannelFactory messageChannelFactory;
+    private Status status;
 
     public BullyAlgorithmParticipantImpl(String hostOrIp, int port, int processId,
                                          MessageChannelFactory messageChannelFactory) {
@@ -39,7 +48,8 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         this.otherParticipants = new ArrayList<>();
         this.coordinator = null;
         this.countOfAnswers = 0;
-        this.listener = null;
+        this.listeners = new ArrayList<>();
+        this.status = Status.Unknown;
     }
 
     @Override
@@ -68,7 +78,9 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     @Override
     public void sendVictory(BullyAlgorithmParticipant p) {
         this.coordinator = this;
+        this.status = Status.Leader;
         this.send(p, Message.Victory);
+        this.sendEventToListener(PeerEvent.BullyReceiveVictory, this, Status.Leader);
     }
 
     @Override
@@ -98,26 +110,27 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
 
     public void onAnswerMessage(int receivedProcessId) {
         countOfAnswers++;
+        BullyAlgorithmParticipant p = lookup(receivedProcessId);
         if (receivedProcessId > this.getProcessId()) {
             awaitVictoryMessage();
         }
-        sendEventToListener(PeerEvent.BullyReceiveAnswer);
+        sendEventToListener(PeerEvent.BullyReceiveAnswer, p, Status.Up);
     }
 
 
     public void onElectionMessage(int receivedProcessId) {
+        BullyAlgorithmParticipant p = lookup(receivedProcessId);
         if (receivedProcessId < this.getProcessId()) {
-            BullyAlgorithmParticipant p = lookup(receivedProcessId);
             sendAnswer(p);
             startElection();
         }
-        sendEventToListener(PeerEvent.BullyReceiveElectionMessage);
+        sendEventToListener(PeerEvent.BullyReceiveElectionMessage, p, Status.Up);
     }
 
     public void onVictoryMessage(int receivedProcessId) {
         log("Leader: " + receivedProcessId);
         this.coordinator = this.lookup(receivedProcessId);
-        sendEventToListener(PeerEvent.BullyReceiveVictory);
+        sendEventToListener(PeerEvent.BullyReceiveVictory, this.coordinator, Status.Leader);
     }
 
 
@@ -137,8 +150,8 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     }
 
     @Override
-    public void setListener(ActionListener listener) {
-        this.listener = listener;
+    public void addListener(ActionListener listener) {
+        this.listeners.add(listener);
     }
 
 
@@ -176,10 +189,17 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     }
 
     private void sendEventToListener(PeerEvent event) {
+        sendEventToListener(event, null, Status.Unknown);
+    }
+
+    private void sendEventToListener(PeerEvent event, BullyAlgorithmParticipant respondent,
+                                     BullyAlgorithmParticipantImpl.Status respondentStatus) {
         int id = BullyAlgorithmParticipantImpl.EVENT_ID_COUNTER++;
-        if (this.listener != null) {
-            ActionEvent e = new ActionEvent(this, id, event.toString());
-            this.listener.actionPerformed(e);
+        for(ActionListener listener : listeners) {
+            BullyActionEvent e = new BullyActionEvent(this, id, event);
+            e.respondent = respondent;
+            e.respondentStatus = respondentStatus;
+            listener.actionPerformed(e);
         }
     }
 

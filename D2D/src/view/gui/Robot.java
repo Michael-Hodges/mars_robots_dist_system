@@ -12,5 +12,6 @@ interface Robot extends Entity {
     void setStatus(RobotStatus status);
     void addPeer(String peerLabel);
     void removePeer(String peerLabel);
+    void removeAllPeers();
     void setPeerStatus(String peerLabel, RobotStatus status);
 }

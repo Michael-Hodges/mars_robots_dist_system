@@ -12,7 +12,6 @@ import java.io.IOException;
 public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
 
     BullyAlgorithmParticipant self;
-    ActionListener listener;
 
     public BullyMessageListenerFactoryImpl(BullyAlgorithmParticipant self) {
         //We use port as processId since it's coming from the coordinator and guaranteed
@@ -20,10 +19,6 @@ public class BullyMessageListenerFactoryImpl implements MessageListenerFactory {
         this.self = self;
     }
 
-    public void setListener(ActionListener listener) {
-        this.listener = listener;
-        this.self.setListener(listener);
-    }
 
     @Override
     public ActionListener getMessageListener() {

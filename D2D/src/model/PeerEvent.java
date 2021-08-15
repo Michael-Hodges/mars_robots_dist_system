@@ -11,5 +11,8 @@ public enum PeerEvent {
     BullyReceiveAnswer,
     BullySendVictory,
     BullyReceiveVictory,
+    PeerAdded,
+    PeerRemoved,
+    PeerStatusUpdated,
     Unknown
 }

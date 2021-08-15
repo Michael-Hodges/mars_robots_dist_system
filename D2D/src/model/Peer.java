@@ -16,4 +16,6 @@ public interface Peer {
     Peer getLeader();
     void add(Peer peer);
     List<Peer> getPeers();
+    PeerImpl.Status getStatus();
+    void setStatus(PeerImpl.Status status);
 }

@@ -19,5 +19,5 @@ public interface BullyAlgorithmParticipant {
     boolean didReceiveAnswerMessages();
     String getHostOrIp();
     int getPort();
-    void setListener(ActionListener listener);
+    void addListener(ActionListener listener);
 }

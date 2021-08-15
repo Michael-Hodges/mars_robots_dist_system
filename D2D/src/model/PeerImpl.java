@@ -2,6 +2,7 @@ package model;
 
 import controller.*;
 import controller.tcp.TCPServer;
+import model.bully.BullyActionEvent;
 import model.bully.BullyAlgorithmParticipant;
 import model.bully.BullyAlgorithmParticipantImpl;
 import model.bully.BullyMessageListenerFactoryImpl;
@@ -15,13 +16,33 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PeerImpl implements Peer {
+public class PeerImpl implements Peer, ActionListener {
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        ActionPeerEvent event = (ActionPeerEvent) e;
+
+        switch(event.eventType) {
+            case BullyReceiveElectionMessage:
+            case BullyReceiveVictory:
+            case BullyReceiveAnswer:
+                onBullyResponses((BullyActionEvent)event);
+                break;
+        }
+    }
 
     public enum Operation {
         Register,
         ElectLeader,
         MulticastRegister,
         MulticastElectLeader
+    }
+
+    public enum Status {
+        Up,
+        Down,
+        Leader,
+        Unknown
     }
 
     ActionListener listener;
@@ -31,6 +52,7 @@ public class PeerImpl implements Peer {
     BullyAlgorithmParticipant selfBullyParticipant;
     MessageChannelFactory messageChannelFactory;
     MulticastSession multicastSession;
+    Status status;
 
     public PeerImpl(String hostOrIP, int port, MessageChannelFactory messageChannelFactory) {
 
@@ -41,6 +63,7 @@ public class PeerImpl implements Peer {
         this.selfBullyParticipant = new BullyAlgorithmParticipantImpl("localhost", port, port,
                 messageChannelFactory);
         this.multicastSession = new MulticastSession();
+        this.status = Status.Unknown;
     }
 
     @Override
@@ -69,8 +92,9 @@ public class PeerImpl implements Peer {
         //set this.serverThread to new thread
         sendEventToListener(PeerEvent.StartServer);
 
+        this.selfBullyParticipant.addListener(this);
+
         BullyMessageListenerFactoryImpl bullyDelegate = new BullyMessageListenerFactoryImpl(this.selfBullyParticipant);
-        bullyDelegate.setListener(listener);
 
         RouteStrategy routeStrategy = new RouteStrategyImpl();
         TCPChaosMessageRouteImpl chaosRouteStrategy = new TCPChaosMessageRouteImpl(routeStrategy);
@@ -84,9 +108,11 @@ public class PeerImpl implements Peer {
         server.register("bully", bullyDelegate);
         try {
             registerWithPeers();
+            this.status = Status.Up;
             server.run();
         } catch (IOException e) {
             e.printStackTrace();
+            this.status = Status.Down;
         }
     }
 
@@ -94,6 +120,52 @@ public class PeerImpl implements Peer {
         for(Peer p : peers) {
             sendRegisterRequestTo(p);
         }
+    }
+
+    void onBullyResponses(BullyActionEvent event) {
+        BullyAlgorithmParticipant respondent = event.getRespondent();
+        BullyAlgorithmParticipantImpl.Status respondentStatus = event.getRespondentStatus();
+        Peer p = locatePeer(respondent.getHostOrIp(), respondent.getPort());
+        if (p != null) {
+            switch(respondentStatus) {
+                case Leader:
+                    clearPreviousLeader();
+                    updatePeerStatus(p, Status.Leader);
+                    break;
+                default:
+                    updatePeerStatus(p, Status.Up);
+                    break;
+            }
+        }
+    }
+
+    void updatePeerStatus(Peer p, Status status) {
+        p.setStatus(status);
+        sendEventToListener(PeerEvent.PeerStatusUpdated);
+    }
+
+    void clearPreviousLeader() {
+        if (this.status == Status.Leader) {
+            this.status = Status.Up;
+        }
+
+        for(Peer p : peers) {
+            if (p.getStatus() == Status.Leader) {
+                p.setStatus(Status.Unknown);
+            }
+        }
+    }
+
+    Peer locatePeer(String hostOrIp, int port) {
+        if (hostOrIp.equals(hostOrIp) && this.port == port) {
+            return this;
+        }
+
+        for (Peer p : peers) {
+            if (p.getHostOrIp().equals(hostOrIp) && p.getPort() == port)
+                return p;
+        }
+        return null;
     }
 
     @Override
@@ -133,12 +205,24 @@ public class PeerImpl implements Peer {
             Logger.log("Added Peer: " + peer);
             peers.add(peer);
             addAsBullyParticipant(peer);
+            sendEventToListener(PeerEvent.PeerAdded);
         }
     }
 
     @Override
     public List<Peer> getPeers() {
         return this.peers;
+    }
+
+    @Override
+    public Status getStatus() {
+        return this.status;
+    }
+
+    @Override
+    public void setStatus(PeerImpl.Status status) {
+        this.status = status;
+        sendEventToListener(PeerEvent.PeerStatusUpdated);
     }
 
     void addAsBullyParticipant(Peer peer) {
@@ -170,7 +254,9 @@ public class PeerImpl implements Peer {
 
     private void sendEventToListener(PeerEvent event) {
         ActionEvent ev = new ActionEvent(this, 1, event.toString());
-        listener.actionPerformed(ev);
+        if (listener != null) {
+            listener.actionPerformed(ev);
+        }
     }
 
 
@@ -228,6 +314,7 @@ public class PeerImpl implements Peer {
                 int port = channel.readNextInt();
                 Peer p = new PeerImpl(hostOrIp, port, messageChannelFactory);
                 PeerImpl.this.add(p);
+                PeerImpl.this.updatePeerStatus(p, Status.Up);
             } catch (IOException e) {
                 e.printStackTrace();
             }
