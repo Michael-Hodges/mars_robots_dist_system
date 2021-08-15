@@ -17,7 +17,7 @@ public class BroadcastListener implements Runnable
     private HashMap<UUID, Integer> idPortMap;
     private UUID uID;
     private int localPort;
-    private double multicastDist = 25;
+    private double multicastDist = 300;
 
 
     public BroadcastListener(int x, int y, int mulitcastPortNum, int localPortNum, InetAddress subnet, UUID localUUID, HashMap<UUID, Integer> idPortMap) throws IOException
@@ -35,11 +35,13 @@ public class BroadcastListener implements Runnable
     {
         int calcX = Math.abs(this.x - x);
         int calcY = Math.abs(this.y - y);
-        if ((calcX*calcY) < this.multicastDist)
+        double dist = Math.sqrt((calcX * calcX) + (calcY * calcY));
+        System.out.println(String.format("(%d,%d) to (%d,%d) is %.2f", this.x, this.y, x, y, dist));
+        if (dist < this.multicastDist)
         {
             return true;
         }
-        else return false;
+        return false;
     }
 
     public void run()
@@ -64,6 +66,8 @@ public class BroadcastListener implements Runnable
                     System.out.println("Received ping from: " + receivedUUID);
                     this.seqNumMap.put(receivedUUID, receivedSeqNum);
                     pong(recv.getAddress(), recv.getPort());
+                } else if (!checkDist(receivedX, receivedY)) {
+                    System.out.println(receivedUUID + "is too far away.");
                 }
             }
             catch (IOException e)
@@ -87,7 +91,7 @@ public class BroadcastListener implements Runnable
     {
         this.x = x;
         this.y = y;
-        System.out.println("Updated coords: " + this.x + this.y);
+        System.out.println("Updated coords: " + this.x + "," + this.y);
     }
 
     public static void main(String[] args) throws InterruptedException, IOException

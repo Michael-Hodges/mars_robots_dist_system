@@ -19,6 +19,7 @@ public class RobotImpl implements Entity, Robot {
     private Color upColor = Color.green;
     private Color downColor = Color.red;
     private Color leaderColor = Color.yellow;
+    private Color unknownColor = Color.gray;
     private Color textColor = Color.BLACK;
     private Random random = new Random();
     private String label = null;
@@ -68,7 +69,13 @@ public class RobotImpl implements Entity, Robot {
 
     @Override
     public void removePeer(String label) {
-        this.peers.remove(label);
+        Robot peer = new RobotImpl(label,0,0);
+        this.peers.remove(peer);
+    }
+
+    @Override
+    public void removeAllPeers() {
+        this.peers = new ArrayList<>();
     }
 
     @Override
@@ -130,6 +137,7 @@ public class RobotImpl implements Entity, Robot {
                 c = this.leaderColor;
                 break;
             default:
+                c = this.unknownColor;
                 break;
         }
 

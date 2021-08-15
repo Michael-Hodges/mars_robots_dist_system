@@ -2,26 +2,60 @@ package model;
 
 import controller.*;
 import controller.tcp.TCPServer;
+import model.bully.BullyActionEvent;
 import model.bully.BullyAlgorithmParticipant;
 import model.bully.BullyAlgorithmParticipantImpl;
 import model.bully.BullyMessageListenerFactoryImpl;
+import overlay.ShortwaveRadio;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class PeerImpl implements Peer {
 
+/**
+ * The main implementation class for peers, the entities which communicate with each other to
+ * accomplish leader election and consensus.
+ */
+public class PeerImpl implements Peer, ActionListener {
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        ActionPeerEvent event = (ActionPeerEvent) e;
+
+        switch(event.eventType) {
+            case ShortwaveRadioPing:
+                discoverLocalGroup();
+                break;
+            case BullyReceiveElectionMessage:
+            case BullyReceiveVictory:
+            case BullyReceiveAnswer:
+                onBullyResponses((BullyActionEvent)event);
+                break;
+        }
+    }
+
+    /**
+     * The 4 types of operations which the peer will execute.
+     */
     public enum Operation {
         Register,
         ElectLeader,
+        UpdatePosition,
+        IdentifyLocalGroup,
         MulticastRegister,
-        MulticastElectLeader
+        MulticastElectLeader,
+        MulticastUpdatePosition,
+        InitiateMulticastUpdatePosition
+    }
+
+    public enum Status {
+        Up,
+        Down,
+        Leader,
+        Unknown
     }
 
     ActionListener listener;
@@ -31,7 +65,20 @@ public class PeerImpl implements Peer {
     BullyAlgorithmParticipant selfBullyParticipant;
     MessageChannelFactory messageChannelFactory;
     MulticastSession multicastSession;
+    ShortwaveRadio shortwaveRadio;
+    Status status;
+    UUID identity;
+    int positionX;
+    int positionY;
 
+
+    /**
+     * Constructor for a PeerImpl, which takes in the ip and port to listen on, as well as a
+     * message channel factory to use to produce MessageChannels to communicate with.
+     * @param hostOrIP the host name or ip address to listen on
+     * @param port the port to listen on
+     * @param messageChannelFactory factory used to produce message channels
+     */
     public PeerImpl(String hostOrIP, int port, MessageChannelFactory messageChannelFactory) {
 
         this.host = hostOrIP;
@@ -41,6 +88,36 @@ public class PeerImpl implements Peer {
         this.selfBullyParticipant = new BullyAlgorithmParticipantImpl("localhost", port, port,
                 messageChannelFactory);
         this.multicastSession = new MulticastSession();
+        this.status = Status.Unknown;
+        this.identity = UUID.randomUUID();
+        this.shortwaveRadio = null;
+    }
+
+    private ShortwaveRadio getShortwaveRadio() {
+        try {
+            return new ShortwaveRadio(convertToShortwavePort(port), this.identity, 100, 100);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void updatePosition(int x, int y) {
+        this.positionX = x;
+        this.positionY = y;
+        this.shortwaveRadio.setCoords(x, y);
+        for (Peer p : peers) {
+            p.setStatus(Status.Unknown);
+        }
+        sendEventToListener(PeerEvent.PeerStatusUpdated);
+    }
+
+    private int convertToShortwavePort(int port) {
+        return port + 1000;
+    }
+
+    private int convertToPeerPort(int port) {
+        return port - 1000;
     }
 
     @Override
@@ -63,14 +140,18 @@ public class PeerImpl implements Peer {
         this.listener = listener;
     }
 
+    /**
+     * Starts TCPServer instance, to listen to incoming messages.
+     */
     private void startServer() {
 
         //implement it here - send to new interruptable thread
         //set this.serverThread to new thread
         sendEventToListener(PeerEvent.StartServer);
 
+        this.selfBullyParticipant.addListener(this);
+
         BullyMessageListenerFactoryImpl bullyDelegate = new BullyMessageListenerFactoryImpl(this.selfBullyParticipant);
-        bullyDelegate.setListener(listener);
 
         RouteStrategy routeStrategy = new RouteStrategyImpl();
         TCPChaosMessageRouteImpl chaosRouteStrategy = new TCPChaosMessageRouteImpl(routeStrategy);
@@ -84,16 +165,81 @@ public class PeerImpl implements Peer {
         server.register("bully", bullyDelegate);
         try {
             registerWithPeers();
+            this.status = Status.Up;
+            startListeningOnShortwaveRadio();
             server.run();
         } catch (IOException e) {
             e.printStackTrace();
+            this.status = Status.Down;
         }
     }
 
+    /**
+     * Set up short wave radio to listen on separate thread
+     */
+    void startListeningOnShortwaveRadio() {
+        this.shortwaveRadio = getShortwaveRadio();
+        this.shortwaveRadio.setListener(this);
+        Thread t = new Thread(this.shortwaveRadio);
+        t.start();
+    }
+    /**
+     * Registers this peer with its neighbors
+     */
     private void registerWithPeers() {
         for(Peer p : peers) {
             sendRegisterRequestTo(p);
         }
+    }
+
+    /**
+     * When a bully response is received, update our view of peer status
+     * @param event response to bully algorithm received
+     */
+    void onBullyResponses(BullyActionEvent event) {
+        BullyAlgorithmParticipant respondent = event.getRespondent();
+        BullyAlgorithmParticipantImpl.Status respondentStatus = event.getRespondentStatus();
+        Peer p = locatePeer(respondent.getHostOrIp(), respondent.getPort());
+        if (p != null) {
+            switch(respondentStatus) {
+                case Leader:
+                    clearPreviousLeader();
+                    updatePeerStatus(p, Status.Leader);
+                    break;
+                default:
+                    updatePeerStatus(p, Status.Up);
+                    break;
+            }
+        }
+    }
+
+    void updatePeerStatus(Peer p, Status status) {
+        p.setStatus(status);
+        sendEventToListener(PeerEvent.PeerStatusUpdated);
+    }
+
+    void clearPreviousLeader() {
+        if (this.status == Status.Leader) {
+            this.status = Status.Up;
+        }
+
+        for(Peer p : peers) {
+            if (p.getStatus() == Status.Leader) {
+                p.setStatus(Status.Unknown);
+            }
+        }
+    }
+
+    Peer locatePeer(String hostOrIp, int port) {
+        if (hostOrIp.equals(hostOrIp) && this.port == port) {
+            return this;
+        }
+
+        for (Peer p : peers) {
+            if (p.getHostOrIp().equals(hostOrIp) && p.getPort() == port)
+                return p;
+        }
+        return null;
     }
 
     @Override
@@ -109,6 +255,25 @@ public class PeerImpl implements Peer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public synchronized void discoverLocalGroup() {
+
+        for(Peer p : peers) {
+            p.setStatus(Status.Unknown);
+        }
+
+        Collection<Integer> ports = this.shortwaveRadio.getIdPortMap().values();
+
+        for(Integer port : ports) {
+            port = convertToPeerPort(port);
+            Peer p = locatePeer("localhost", port);
+            if (p != null) {
+                p.setStatus(Status.Up);
+            }
+        }
+        sendEventToListener(PeerEvent.PeerStatusUpdated);
     }
 
     @Override
@@ -133,12 +298,24 @@ public class PeerImpl implements Peer {
             Logger.log("Added Peer: " + peer);
             peers.add(peer);
             addAsBullyParticipant(peer);
+            sendEventToListener(PeerEvent.PeerAdded);
         }
     }
 
     @Override
     public List<Peer> getPeers() {
         return this.peers;
+    }
+
+    @Override
+    public Status getStatus() {
+        return this.status;
+    }
+
+    @Override
+    public void setStatus(PeerImpl.Status status) {
+        this.status = status;
+        sendEventToListener(PeerEvent.PeerStatusUpdated);
     }
 
     void addAsBullyParticipant(Peer peer) {
@@ -164,13 +341,22 @@ public class PeerImpl implements Peer {
     }
 
 
+    /**
+     * Stops the TCPServer running.
+     */
     private void stopServer() {
         //interrupt and stop this.serverThread
     }
 
+    /**
+     * Sends a given event to the action listener
+     * @param event event to send to listener
+     */
     private void sendEventToListener(PeerEvent event) {
         ActionEvent ev = new ActionEvent(this, 1, event.toString());
-        listener.actionPerformed(ev);
+        if (listener != null) {
+            listener.actionPerformed(ev);
+        }
     }
 
 
@@ -179,6 +365,9 @@ public class PeerImpl implements Peer {
         return null;
     }
 
+    /**
+     * Starts this peer's server.
+     */
     public void start() {
         startServer();
     }
@@ -189,6 +378,9 @@ public class PeerImpl implements Peer {
         return this.getHostAndPort();
     }
 
+    /**
+     * Returns a new message listener for this peer to use with message channels
+     */
     class PeerMessageListenerFactory implements MessageListenerFactory {
 
         @Override
@@ -197,6 +389,10 @@ public class PeerImpl implements Peer {
         }
     }
 
+    /**
+     * Handles actions for the peer, based on the messages the peer receives from the message
+     * channels.
+     */
     class PeerProcess implements ActionListener {
 
         @Override
@@ -217,33 +413,120 @@ public class PeerImpl implements Peer {
                 case MulticastRegister:
                     onMulticastRegister(channel);
                     break;
+                case IdentifyLocalGroup:
+                    onDiscoverLocalGroup(channel);
+                    break;
+                case UpdatePosition:
+                    onUpdatePosition(channel);
+                    break;
+                case MulticastUpdatePosition:
+                    onMulticastUpdatePosition(channel);
+                    break;
+                case InitiateMulticastUpdatePosition:
+                    onInitiateMulticastUpdatePosition(channel);
+                    break;
                 default:
                     break;
             }
         }
 
+        /**
+         * When a register event is called, add the requesting peer to the current peer's list
+         * @param channel message channel to listen on
+         */
         private void onRegister(MessageChannel channel) {
             try {
                 String hostOrIp = channel.readNextString();
                 int port = channel.readNextInt();
                 Peer p = new PeerImpl(hostOrIp, port, messageChannelFactory);
                 PeerImpl.this.add(p);
+                PeerImpl.this.updatePeerStatus(p, Status.Up);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
+        /**
+         * When an election is happening, trigger this peer to take part in the election.
+         * @param channel channel to listen on
+         */
         private void onElectLeader(MessageChannel channel) {
             PeerImpl.this.electLeader();
             channel.close();
         }
 
+        private void onDiscoverLocalGroup(MessageChannel channel) {
+            PeerImpl.this.discoverLocalGroup();
+            channel.close();
+        }
+
+        private void onUpdatePosition(MessageChannel channel) {
+            try {
+                int x = channel.readNextInt();
+                int y = channel.readNextInt();
+                channel.close();
+                PeerImpl.this.updatePosition(x, y);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void onMulticastUpdatePosition(MessageChannel channel) {
+            try {
+                int id = channel.readNextInt();
+                if(PeerImpl.this.multicastSession.isIDUsed(id)) {
+                    channel.close();
+                    return;
+                }
+                PeerImpl.this.multicastSession.addUsedId(id);
+                int x = channel.readNextInt();
+                int y = channel.readNextInt();
+                channel.close();
+                PeerImpl.this.updatePosition(x, y);
+                for (Peer p : PeerImpl.this.peers){
+                    MessageChannel newChannel = getMessageChannel(p);
+                    newChannel.writeString("peer");
+                    newChannel.writeString(Operation.MulticastUpdatePosition.name());
+                    newChannel.writeInt(id);
+                    newChannel.writeInt(x);
+                    newChannel.writeInt(y);
+                    newChannel.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void onInitiateMulticastUpdatePosition(MessageChannel channel) {
+            try {
+                int x = channel.readNextInt();
+                int y = channel.readNextInt();
+                channel.close();
+                int id = PeerImpl.this.multicastSession.getNextId();
+                MessageChannel newChannel = getMessageChannel(PeerImpl.this);
+                newChannel.writeString("peer");
+                newChannel.writeString(Operation.MulticastUpdatePosition.name());
+                newChannel.writeInt(id);
+                newChannel.writeInt(x);
+                newChannel.writeInt(y);
+                newChannel.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         // on multicast takes channel
         // turn it into an action event
         // store id's in list
-        // peer multicastelectleader/multicastregister 234423 register/electleader data1 data2
+        // peer multicastelectleader/multicastregister 234423 data1 data2
         //
 
+        /**
+         * Multicast implementation of onElectLeader, once this peer votes, rebroadcast election
+         * request to peers to ensure reception by all peers
+         * @param channel channel to listen on
+         */
         private void onMulticastElectLeader(MessageChannel channel){
             try {
                 int id = channel.readNextInt();
@@ -252,7 +535,6 @@ public class PeerImpl implements Peer {
                     return;
                 }
                 PeerImpl.this.multicastSession.addUsedId(id);
-                Operation m = Operation.valueOf(channel.readNextString());
                 PeerImpl.this.electLeader();
                 channel.close();
                 for (Peer p : PeerImpl.this.peers){
@@ -260,17 +542,20 @@ public class PeerImpl implements Peer {
                     newChannel.writeString("peer");
                     newChannel.writeString(Operation.MulticastElectLeader.name());
                     newChannel.writeInt(id);
-                    newChannel.writeString(m.name());
                     newChannel.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        // onmulticastelectleader
 
 
-        // onmulticastregister
+        /**
+         * Reliable multicast implementation of onRegister, registers a new node with the current
+         * peer, then rebroadcasts the request to all known peers, to ensure reception by all
+         * neighbors
+         * @param channel channel to receive commands on
+         */
         private void onMulticastRegister(MessageChannel channel){
             try {
                 int id = channel.readNextInt();
@@ -279,7 +564,6 @@ public class PeerImpl implements Peer {
                     return;
                 }
                 PeerImpl.this.multicastSession.addUsedId(id);
-                Operation m = Operation.valueOf(channel.readNextString());
                 String hostOrIp = channel.readNextString();
                 int port = channel.readNextInt();
                 Peer p = new PeerImpl(hostOrIp, port, messageChannelFactory);
@@ -289,7 +573,6 @@ public class PeerImpl implements Peer {
                     newChannel.writeString("peer");
                     newChannel.writeString(Operation.MulticastElectLeader.name());
                     newChannel.writeInt(id);
-                    newChannel.writeString(m.name());
                     newChannel.writeString(hostOrIp);
                     newChannel.writeInt(port);
                     newChannel.close();
@@ -300,6 +583,11 @@ public class PeerImpl implements Peer {
         }
         //
 
+        /**
+         * Returns new message channel directed to a given peer
+         * @param peer peer to connect to with new channel
+         * @return new channel to given peer
+         */
         private MessageChannel getMessageChannel(Peer peer){
             try {
                 return PeerImpl.this.messageChannelFactory.getChannel(peer.getHostOrIp(),
@@ -312,6 +600,9 @@ public class PeerImpl implements Peer {
     }
 
 
+    /**
+     * Class to ensure that a Peer can track IDs of received multicast messages.
+     */
     class MulticastSession {
         private int id = 0;
         Set<Integer> usedIds = new HashSet<>();

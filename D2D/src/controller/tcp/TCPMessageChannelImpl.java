@@ -6,19 +6,37 @@ import controller.MessageChannel;
 import java.io.*;
 import java.net.Socket;
 
+/**
+ * TCP implementation of the MessageChannel interface, provides communication channels between
+ * nodes.
+ */
 public class TCPMessageChannelImpl implements MessageChannel {
     private Socket conn;
     private DataInputStream in;
     private DataOutputStream out;
 
+    /**
+     * Creates new message channel, using a socket created from the supplied host and port
+     * @param hostOrIp ip or hostname to use
+     * @param port port to use
+     * @throws IOException Java exception thrown when Socket is created
+     */
     public TCPMessageChannelImpl(String hostOrIp, int port) throws IOException {
         this.initialize(new Socket(hostOrIp, port));
     }
 
+    /**
+     * Creates new MessageChannel with given socket.
+     * @param socket socket to use to create channel
+     */
     public TCPMessageChannelImpl(Socket socket) {
         this.initialize(socket);
     }
 
+    /**
+     * Sets this objects in and out streams using the given socket.
+     * @param conn Socket to use for input and output streams
+     */
     private void initialize(Socket conn) {
         this.conn = conn;
         try {
@@ -50,6 +68,7 @@ public class TCPMessageChannelImpl implements MessageChannel {
         return this.in.readInt();
     }
 
+    @Override
     public void close() {
         try {
             this.out.flush();
