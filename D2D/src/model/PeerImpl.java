@@ -15,8 +15,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * The main implementation class for peers, the entities which communicate with each other to
+ * accomplish leader election and consensus.
+ */
 public class PeerImpl implements Peer {
 
+    /**
+     * The 4 types of operations which the peer will execute.
+     */
     public enum Operation {
         Register,
         ElectLeader,
@@ -32,6 +39,13 @@ public class PeerImpl implements Peer {
     MessageChannelFactory messageChannelFactory;
     MulticastSession multicastSession;
 
+    /**
+     * Constructor for a PeerImpl, which takes in the ip and port to listen on, as well as a
+     * message channel factory to use to produce MessageChannels to communicate with.
+     * @param hostOrIP the host name or ip address to listen on
+     * @param port the port to listen on
+     * @param messageChannelFactory factory used to produce message channels
+     */
     public PeerImpl(String hostOrIP, int port, MessageChannelFactory messageChannelFactory) {
 
         this.host = hostOrIP;
@@ -63,6 +77,9 @@ public class PeerImpl implements Peer {
         this.listener = listener;
     }
 
+    /**
+     * Starts TCPServer instance, to listen to incoming messages.
+     */
     private void startServer() {
 
         //implement it here - send to new interruptable thread
@@ -90,6 +107,9 @@ public class PeerImpl implements Peer {
         }
     }
 
+    /**
+     * Registers this peer with its neighbors
+     */
     private void registerWithPeers() {
         for(Peer p : peers) {
             sendRegisterRequestTo(p);
@@ -164,10 +184,17 @@ public class PeerImpl implements Peer {
     }
 
 
+    /**
+     * Stops the TCPServer running.
+     */
     private void stopServer() {
         //interrupt and stop this.serverThread
     }
 
+    /**
+     * Sends a given event to the action listener
+     * @param event event to send to listener
+     */
     private void sendEventToListener(PeerEvent event) {
         ActionEvent ev = new ActionEvent(this, 1, event.toString());
         listener.actionPerformed(ev);
@@ -179,6 +206,9 @@ public class PeerImpl implements Peer {
         return null;
     }
 
+    /**
+     * Starts this peer's server.
+     */
     public void start() {
         startServer();
     }
@@ -189,6 +219,9 @@ public class PeerImpl implements Peer {
         return this.getHostAndPort();
     }
 
+    /**
+     * Returns a new message listener for this peer to use with message channels
+     */
     class PeerMessageListenerFactory implements MessageListenerFactory {
 
         @Override
@@ -197,6 +230,10 @@ public class PeerImpl implements Peer {
         }
     }
 
+    /**
+     * Handles actions for the peer, based on the messages the peer receives from the message
+     * channels.
+     */
     class PeerProcess implements ActionListener {
 
         @Override
@@ -222,6 +259,10 @@ public class PeerImpl implements Peer {
             }
         }
 
+        /**
+         * When a register event is called, add the requesting peer to the current peer's list
+         * @param channel message channel to listen on
+         */
         private void onRegister(MessageChannel channel) {
             try {
                 String hostOrIp = channel.readNextString();
@@ -233,6 +274,10 @@ public class PeerImpl implements Peer {
             }
         }
 
+        /**
+         * When an election is happening, trigger this peer to take part in the election.
+         * @param channel channel to listen on
+         */
         private void onElectLeader(MessageChannel channel) {
             PeerImpl.this.electLeader();
             channel.close();
@@ -244,6 +289,11 @@ public class PeerImpl implements Peer {
         // peer multicastelectleader/multicastregister 234423 register/electleader data1 data2
         //
 
+        /**
+         * Multicast implementation of onElectLeader, once this peer votes, rebroadcast election
+         * request to peers to ensure reception by all peers
+         * @param channel channel to listen on
+         */
         private void onMulticastElectLeader(MessageChannel channel){
             try {
                 int id = channel.readNextInt();
@@ -267,10 +317,14 @@ public class PeerImpl implements Peer {
                 e.printStackTrace();
             }
         }
-        // onmulticastelectleader
 
 
-        // onmulticastregister
+        /**
+         * Reliable multicast implementation of onRegister, registers a new node with the current
+         * peer, then rebroadcasts the request to all known peers, to ensure reception by all
+         * neighbors
+         * @param channel channel to receive commands on
+         */
         private void onMulticastRegister(MessageChannel channel){
             try {
                 int id = channel.readNextInt();
@@ -300,6 +354,11 @@ public class PeerImpl implements Peer {
         }
         //
 
+        /**
+         * Returns new message channel directed to a given peer
+         * @param peer peer to connect to with new channel
+         * @return new channel to given peer
+         */
         private MessageChannel getMessageChannel(Peer peer){
             try {
                 return PeerImpl.this.messageChannelFactory.getChannel(peer.getHostOrIp(),
@@ -312,6 +371,9 @@ public class PeerImpl implements Peer {
     }
 
 
+    /**
+     * Class to ensure that a Peer can track IDs of received multicast messages.
+     */
     class MulticastSession {
         private int id = 0;
         Set<Integer> usedIds = new HashSet<>();
