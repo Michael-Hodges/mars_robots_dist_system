@@ -12,6 +12,7 @@ public interface Peer {
     int getPort();
     void setListener(ActionListener listener); //will be used to connect to GUI
     void sendRegisterRequestTo(Peer peer);
+    void discoverLocalGroup();
     void electLeader();
     Peer getLeader();
     void add(Peer peer);

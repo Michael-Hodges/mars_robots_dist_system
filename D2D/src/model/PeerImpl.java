@@ -6,15 +6,13 @@ import model.bully.BullyActionEvent;
 import model.bully.BullyAlgorithmParticipant;
 import model.bully.BullyAlgorithmParticipantImpl;
 import model.bully.BullyMessageListenerFactoryImpl;
+import overlay.ShortwaveRadio;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PeerImpl implements Peer, ActionListener {
 
@@ -23,6 +21,9 @@ public class PeerImpl implements Peer, ActionListener {
         ActionPeerEvent event = (ActionPeerEvent) e;
 
         switch(event.eventType) {
+            case ShortwaveRadioPing:
+                discoverLocalGroup();
+                break;
             case BullyReceiveElectionMessage:
             case BullyReceiveVictory:
             case BullyReceiveAnswer:
@@ -34,6 +35,8 @@ public class PeerImpl implements Peer, ActionListener {
     public enum Operation {
         Register,
         ElectLeader,
+        UpdatePosition,
+        IdentifyLocalGroup,
         MulticastRegister,
         MulticastElectLeader
     }
@@ -52,7 +55,12 @@ public class PeerImpl implements Peer, ActionListener {
     BullyAlgorithmParticipant selfBullyParticipant;
     MessageChannelFactory messageChannelFactory;
     MulticastSession multicastSession;
+    ShortwaveRadio shortwaveRadio;
     Status status;
+    UUID identity;
+    int positionX;
+    int positionY;
+
 
     public PeerImpl(String hostOrIP, int port, MessageChannelFactory messageChannelFactory) {
 
@@ -64,6 +72,35 @@ public class PeerImpl implements Peer, ActionListener {
                 messageChannelFactory);
         this.multicastSession = new MulticastSession();
         this.status = Status.Unknown;
+        this.identity = UUID.randomUUID();
+        this.shortwaveRadio = null;
+    }
+
+    private ShortwaveRadio getShortwaveRadio() {
+        try {
+            return new ShortwaveRadio(convertToShortwavePort(port), this.identity, 100, 100);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void updatePosition(int x, int y) {
+        this.positionX = x;
+        this.positionY = y;
+        this.shortwaveRadio.setCoords(x, y);
+        for (Peer p : peers) {
+            p.setStatus(Status.Unknown);
+        }
+        sendEventToListener(PeerEvent.PeerStatusUpdated);
+    }
+
+    private int convertToShortwavePort(int port) {
+        return port + 1000;
+    }
+
+    private int convertToPeerPort(int port) {
+        return port - 1000;
     }
 
     @Override
@@ -109,12 +146,21 @@ public class PeerImpl implements Peer, ActionListener {
         try {
             registerWithPeers();
             this.status = Status.Up;
+            startListeningOnShortwaveRadio();
             server.run();
         } catch (IOException e) {
             e.printStackTrace();
             this.status = Status.Down;
         }
     }
+
+    void startListeningOnShortwaveRadio() {
+        this.shortwaveRadio = getShortwaveRadio();
+        this.shortwaveRadio.setListener(this);
+        Thread t = new Thread(this.shortwaveRadio);
+        t.start();
+    }
+
 
     private void registerWithPeers() {
         for(Peer p : peers) {
@@ -181,6 +227,25 @@ public class PeerImpl implements Peer, ActionListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public synchronized void discoverLocalGroup() {
+
+        for(Peer p : peers) {
+            p.setStatus(Status.Unknown);
+        }
+
+        Collection<Integer> ports = this.shortwaveRadio.getIdPortMap().values();
+
+        for(Integer port : ports) {
+            port = convertToPeerPort(port);
+            Peer p = locatePeer("localhost", port);
+            if (p != null) {
+                p.setStatus(Status.Up);
+            }
+        }
+        sendEventToListener(PeerEvent.PeerStatusUpdated);
     }
 
     @Override
@@ -303,6 +368,12 @@ public class PeerImpl implements Peer, ActionListener {
                 case MulticastRegister:
                     onMulticastRegister(channel);
                     break;
+                case IdentifyLocalGroup:
+                    onDiscoverLocalGroup(channel);
+                    break;
+                case UpdatePosition:
+                    onUpdatePosition(channel);
+                    break;
                 default:
                     break;
             }
@@ -324,6 +395,23 @@ public class PeerImpl implements Peer, ActionListener {
             PeerImpl.this.electLeader();
             channel.close();
         }
+
+        private void onDiscoverLocalGroup(MessageChannel channel) {
+            PeerImpl.this.discoverLocalGroup();
+            channel.close();
+        }
+
+        private void onUpdatePosition(MessageChannel channel) {
+            try {
+                int x = channel.readNextInt();
+                int y = channel.readNextInt();
+                channel.close();
+                PeerImpl.this.updatePosition(x, y);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
 
         // on multicast takes channel
         // turn it into an action event

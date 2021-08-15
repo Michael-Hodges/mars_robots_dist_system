@@ -3,6 +3,7 @@ package model;
 public enum PeerEvent {
     StartServer,
     Register,
+    ShortwaveRadioPing,
     ElectLeader,
     BullyStartElection,
     BullyReceiveElectionMessage,

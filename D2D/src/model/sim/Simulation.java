@@ -30,11 +30,30 @@ public class Simulation {
 
     public void start() {
         setRegisteredPeers();
+        movePeers();
+
+        //this.chaosClient.blockRoute(p.getHostOrIp(), p.getPort(), "bully");
+    }
+
+    private void electLeader() {
+        Logger.log("Simulating leader election.");
         Peer p = randomPeer();
         this.peerClient.startLeaderElection(p.getHostOrIp(), p.getPort());
         Logger.log(p.toString());
-        //this.chaosClient.blockRoute(p.getHostOrIp(), p.getPort(), "bully");
     }
+
+    private void movePeers() {
+        Logger.log("Simulating discovering local group");
+        int n = 4;
+        for(int i = 0; i < n; i++) {
+            int x = random.nextInt(1000);
+            int y = random.nextInt(1000);
+            Peer p = randomPeer();
+            Logger.log("Moving " + p + " to (" + x + ", " + y + ")");
+            this.peerClient.relocate(p.getHostOrIp(), p.getPort(), x, y);
+        }
+    }
+
 
     private void setRegisteredPeers() {
         for(String name : this.coordinator.getNodes()) {
