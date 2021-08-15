@@ -80,7 +80,6 @@ public class PeerImpl implements Peer {
 
         TCPServer server = new TCPServer(this.port, messageRouter);
 
-
         server.register("peer", new PeerMessageListenerFactory());
         server.register("bully", bullyDelegate);
         try {
