@@ -1,0 +1,154 @@
+package overlay;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.util.*;
+
+public class ShortwaveRadio implements Runnable
+{
+    private InetAddress multiCastSubnet;
+    private int localPort;
+    private int multiCastPort;
+    private DatagramSocket localSocket;
+    private UUID uID;
+    private HashMap<UUID, Integer> idPortMap;
+    private List<Integer> msgIds;
+    private int x;
+    private int y;
+    //private BroadcastListener multiCastListener;
+    private BroadcastListener multiCastListener;
+
+    public ShortwaveRadio(int localPort, UUID identify, int xCoords, int yCoords) throws IOException
+    {
+        super();
+        this.uID = identify;
+        this.localPort = localPort;
+        this.localSocket = new DatagramSocket(this.localPort);
+        this.multiCastPort = 5000;
+        this.multiCastSubnet = InetAddress.getByName("228.5.6.7");
+        this.idPortMap = new HashMap<>();
+        this.x = xCoords;
+        this.y = yCoords;
+        this.multiCastListener = new BroadcastListener(this.x, this.y, this.multiCastPort, this.localPort, this.multiCastSubnet, this.uID, this.idPortMap);
+        this.msgIds = new ArrayList<>();
+        new Thread(this.multiCastListener).start();
+    }
+
+    public void ping() throws IOException
+    {
+        Date date = new Date();
+        int seqNum = (int) date.getTime();
+        String pingMessage = this.uID + " " + seqNum + " ping " + this.x + " " + this.y;
+
+
+        DatagramPacket message = new DatagramPacket(pingMessage.getBytes(), pingMessage.length(), this.multiCastSubnet, this.multiCastPort);
+        this.localSocket.send(message);
+
+        // get responses
+        // use Arraylist to keep track of UUID messages that come in
+        // use retain all such that the messages can send to are the ones
+        // received ping from
+        ArrayList<UUID> uuidHolder = new ArrayList<>();
+        while (true)
+        {
+            try
+            {
+                byte[] buf = new byte[1000];
+                DatagramPacket recv = new DatagramPacket(buf, buf.length);
+                this.localSocket.receive(recv);
+                this.localSocket.setSoTimeout(1000); // timeout set to 500ms
+                String recvData = new String(recv.getData(), 0, recv.getLength());
+                String[] splitRecvData = recvData.split(" ");
+                if (splitRecvData[0].equals("multicast")){
+                    runMulticast(splitRecvData);
+                } else {
+                    UUID receivedUUID = UUID.fromString(splitRecvData[0]);
+                    int receivedPort = Integer.parseInt(splitRecvData[1]);
+                    this.idPortMap.put(receivedUUID, receivedPort);
+                    uuidHolder.add(receivedUUID);
+                }
+            }
+            catch (Exception e)
+            {
+                // Update idPortMap to have keys can send to.
+                this.idPortMap.keySet().retainAll(uuidHolder);
+                System.out.println(this.idPortMap);
+                break;
+            }
+        }
+    }
+
+    public void runMulticast(String[] msg) throws IOException {
+
+        if (!msgIds.contains(Integer.parseInt(msg[2]))) {
+
+
+            String multicastMessage = "multicast " + this.uID + " " + msg[2] + " " + msg[3];
+            // number 2 is message id number, number 3 is the actual message
+
+            for (Map.Entry<UUID, Integer> ent : idPortMap.entrySet()) {
+                DatagramPacket message = new DatagramPacket(multicastMessage.getBytes(), multicastMessage.length(),
+                        InetAddress.getByName("localhost"), ent.getValue());
+                this.localSocket.send(message);
+            }
+            //don't need to get responses because we've already sent the message
+        }
+    }
+
+    public HashMap<UUID, Integer> getIdPortMap()
+    {
+        return this.idPortMap;
+    }
+
+    public void setCoords(int x, int y)
+    {
+        this.x = x;
+        this.y = y;
+        this.multiCastListener.updateCoords(this.x, this.y);
+    }
+
+    public void run()
+    {
+        int count = 0;
+        while (true)
+        {
+            try
+            {
+                ping();
+                Thread.sleep(3000); // cast ping every 3 seconds to update
+                //can add code here to send out multicast messages we want
+                runMulticast(new String[]{"multicast", this.uID.toString(), String.valueOf(count), "this is a message"});
+                count++;
+            }
+            catch (IOException | InterruptedException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+
+    public static void main(String[] args) throws IOException
+    {
+        UUID generatedUUID = UUID.randomUUID();
+        System.out.println("local UUID: " + generatedUUID);
+        Scanner myScanner = new Scanner(System.in);
+        System.out.println("What local port to listen for UDP on?");
+        int listen_port = Integer.parseInt(myScanner.nextLine());
+        System.out.println("X coord?");
+        int inputX = Integer.parseInt(myScanner.nextLine());
+        System.out.println("Y coord?");
+        int inputY = Integer.parseInt(myScanner.nextLine());
+        ShortwaveRadio myShortwaveRadio = new ShortwaveRadio(listen_port, generatedUUID, inputX, inputY);
+        new Thread(myShortwaveRadio).start();
+
+
+//            myScanner.nextLine();
+//            myRobot.ping();
+//            System.out.println("printing local hashmap");
+//            System.out.println(myRobot.idPortMap);
+    }
+}
