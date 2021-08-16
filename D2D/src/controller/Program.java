@@ -18,7 +18,10 @@ import java.util.List;
  */
 public class Program {
 
-    //This program can run either as the coordinator or as a peer
+    /**
+     * This program can run either as the coordinator or as a peer, also spins up the gui server
+     * and simulation, can start a bully election.
+     */
     public static void main(String[] args) {
         int coordinatorPort = 5000;
         String coordinatorHostOrIP = "localhost";

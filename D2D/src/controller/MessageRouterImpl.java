@@ -5,10 +5,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementation of MessageRouter interface, can register individual routes, and return them on
+ * command.
+ */
 public class MessageRouterImpl implements MessageRouter {
     List<MessageRoute> messageRoutes;
     RouteStrategy routeStrategy;
 
+    /**
+     * Constructs new router
+     */
     public MessageRouterImpl() {
         this(new RouteStrategyImpl());
     }
