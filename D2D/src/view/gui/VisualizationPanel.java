@@ -2,6 +2,9 @@ package view.gui;
 
 import javax.swing.*;
 
+/**
+ * Runs the visualisation panel using a dashboard
+ */
 public class VisualizationPanel {
 
     public void start(DashboardImpl dashboard) {

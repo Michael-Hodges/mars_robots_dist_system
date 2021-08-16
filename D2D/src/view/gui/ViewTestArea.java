@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Testbed for the views
+ */
 public class ViewTestArea {
 
     static Random random = new Random();

@@ -3,10 +3,17 @@ package view.gui;
 
 import java.rmi.RemoteException;
 
+/**
+ * Implementation of the Remote Robot, a wrap of a normal Robot
+ */
 public class RemoteRobotImpl implements RemoteRobot {
 
     private view.gui.Robot wrappedRobot;
 
+    /**
+     * Constructs a new RemoteRobot
+     * @param robot robot to be wrapped
+     */
     public RemoteRobotImpl(Robot robot) {
         this.wrappedRobot = robot;
     }

@@ -4,11 +4,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * JPanel implementation of the Dashboard interface
+ */
 public class DashboardImpl extends JPanel implements Dashboard {
 
     GraphicImpl graphics;
     World world;
 
+    /**
+     * Constructs a new Dashboard
+     */
     public DashboardImpl() {
         this.graphics = null;
         this.world = new World();
@@ -35,6 +41,9 @@ public class DashboardImpl extends JPanel implements Dashboard {
         }
     }
 
+    /**
+     * Starts a timer to update entities after an interval
+     */
     public void start() {
         Timer timer = new Timer(1000/60, (e) -> updateLoop());
         timer.start();
@@ -46,7 +55,9 @@ public class DashboardImpl extends JPanel implements Dashboard {
         refreshLayout();
     }
 
-
+    /**
+     * Refreshes the layout of the JPanel
+     */
     void refreshLayout() {
         double entityScale = 0.5;
         List<Entity> entities = this.world.getEntities();
@@ -70,11 +81,18 @@ public class DashboardImpl extends JPanel implements Dashboard {
         }
     }
 
+    /**
+     * Calculates diagonal of a square
+     * @param size size of a square
+     * @return the length of the diagonal
+     */
     double squareDiagonal(int size) {
         return Math.sqrt((size * size) + (size * size));
     }
 
-
+    /**
+     * Updates each of the entities then repaints the JPanel
+     */
     public void updateLoop() {
         for(Entity e : this.world.getEntities()) {
             e.update(this.world);
