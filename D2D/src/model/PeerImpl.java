@@ -51,6 +51,9 @@ public class PeerImpl implements Peer, ActionListener {
         InitiateMulticastUpdatePosition
     }
 
+    /**
+     * Various statuses that a peer can have
+     */
     public enum Status {
         Up,
         Down,
@@ -93,6 +96,10 @@ public class PeerImpl implements Peer, ActionListener {
         this.shortwaveRadio = null;
     }
 
+    /**
+     * Returns a new shortwave radio for the peer to use
+     * @return new Shortwaveradio object
+     */
     private ShortwaveRadio getShortwaveRadio() {
         try {
             return new ShortwaveRadio(convertToShortwavePort(port), this.identity, 100, 100);
@@ -102,6 +109,11 @@ public class PeerImpl implements Peer, ActionListener {
         }
     }
 
+    /**
+     * Update the position of this peer
+     * @param x x coordinate to move to
+     * @param y y coordinate to move to
+     */
     private void updatePosition(int x, int y) {
         this.positionX = x;
         this.positionY = y;
@@ -112,10 +124,20 @@ public class PeerImpl implements Peer, ActionListener {
         sendEventToListener(PeerEvent.PeerStatusUpdated);
     }
 
+    /**
+     * Converts this peers port number to a usable shortwave radio port number
+     * @param port port number to convert
+     * @return new port number
+     */
     private int convertToShortwavePort(int port) {
         return port + 1000;
     }
 
+    /**
+     * Converts the shortwave radio port back to a peer port
+     * @param port port to convert
+     * @return new poert number
+     */
     private int convertToPeerPort(int port) {
         return port - 1000;
     }
@@ -213,11 +235,19 @@ public class PeerImpl implements Peer, ActionListener {
         }
     }
 
+    /**
+     * Update the status of a given peer
+     * @param p peers status to update
+     * @param status status to send to peer
+     */
     void updatePeerStatus(Peer p, Status status) {
         p.setStatus(status);
         sendEventToListener(PeerEvent.PeerStatusUpdated);
     }
 
+    /**
+     * Removes the previous leader of the bully election
+     */
     void clearPreviousLeader() {
         if (this.status == Status.Leader) {
             this.status = Status.Up;
@@ -230,6 +260,12 @@ public class PeerImpl implements Peer, ActionListener {
         }
     }
 
+    /**
+     * Locates a peer given a host/ip and port
+     * @param hostOrIp host/ip to find a peer for
+     * @param port port number to find the peer for
+     * @return the peer with given host/ip and port
+     */
     Peer locatePeer(String hostOrIp, int port) {
         if (hostOrIp.equals(hostOrIp) && this.port == port) {
             return this;
@@ -318,6 +354,10 @@ public class PeerImpl implements Peer, ActionListener {
         sendEventToListener(PeerEvent.PeerStatusUpdated);
     }
 
+    /**
+     * Wraps a given peer as a bully participant
+     * @param peer peer to express as a bully participant
+     */
     void addAsBullyParticipant(Peer peer) {
         BullyAlgorithmParticipant p = new BullyAlgorithmParticipantImpl(peer.getHostOrIp(),
                 peer.getPort(), peer.getPort(), this.messageChannelFactory);
@@ -455,11 +495,19 @@ public class PeerImpl implements Peer, ActionListener {
             channel.close();
         }
 
+        /**
+         * Discovers the local group for this peer
+         * @param channel channel command came in on
+         */
         private void onDiscoverLocalGroup(MessageChannel channel) {
             PeerImpl.this.discoverLocalGroup();
             channel.close();
         }
 
+        /**
+         * Updates position of this peer
+         * @param channel channel to receive message from
+         */
         private void onUpdatePosition(MessageChannel channel) {
             try {
                 int x = channel.readNextInt();
@@ -471,6 +519,11 @@ public class PeerImpl implements Peer, ActionListener {
             }
         }
 
+        /**
+         * On multicast update position, updates position, then tells all other peers to do the
+         * same (reliable multicast)
+         * @param channel channel to receive commands on
+         */
         private void onMulticastUpdatePosition(MessageChannel channel) {
             try {
                 int id = channel.readNextInt();
@@ -497,6 +550,11 @@ public class PeerImpl implements Peer, ActionListener {
             }
         }
 
+        /**
+         * On initiate multicast update position, updates position, then tells all other peers
+         * (including itself) to do the same (reliable multicast)
+         * @param channel channel to receive commands on
+         */
         private void onInitiateMulticastUpdatePosition(MessageChannel channel) {
             try {
                 int x = channel.readNextInt();
@@ -609,6 +667,11 @@ public class PeerImpl implements Peer, ActionListener {
 
         // Since each node will have its own id counter, check to make sure current id is
         // not in the usedId set
+
+        /**
+         * Gets the next unused id
+         * @return new id for multicast
+         */
         public synchronized int getNextId() {
             while(this.usedIds.contains(this.id)) {
                 this.id++;
@@ -616,10 +679,19 @@ public class PeerImpl implements Peer, ActionListener {
             return this.id;
         }
 
+        /**
+         * Adds a seen id to the list
+         * @param id id that has been used
+         */
         public synchronized void addUsedId(int id) {
             this.usedIds.add(id);
         }
 
+        /**
+         * Check if an id has been seen yet
+         * @param id id to check
+         * @return true if the id has already been used
+         */
         public synchronized boolean isIDUsed(int id){
             return usedIds.contains(id);
         }

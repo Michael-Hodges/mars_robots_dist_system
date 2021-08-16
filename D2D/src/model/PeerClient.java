@@ -5,14 +5,26 @@ import controller.MessageChannelFactory;
 
 import java.io.IOException;
 
+/**
+ * Peer Client for use by the driver program.
+ */
 public class PeerClient {
 
     MessageChannelFactory messageChannelFactory;
 
+    /**
+     * Creates a new peer client.
+     * @param messageChannelFactory messageChannelFactory to use for this client
+     */
     public PeerClient(MessageChannelFactory messageChannelFactory) {
         this.messageChannelFactory = messageChannelFactory;
     }
 
+    /**
+     * Sends a message to a peer to start a leader election
+     * @param hostOrIp host to send message to
+     * @param port port to send message to
+     */
     public void startLeaderElection(String hostOrIp, int port) {
         try {
             MessageChannel channel = messageChannelFactory.getChannel(hostOrIp, port);
@@ -25,6 +37,11 @@ public class PeerClient {
         }
     }
 
+    /**
+     * Sends a message to a peer to discover the local group
+     * @param hostOrIp host to send message to
+     * @param port port to send message to
+     */
     public void discoverLocalGroup(String hostOrIp, int port) {
         try {
             MessageChannel channel = messageChannelFactory.getChannel(hostOrIp, port);
@@ -36,6 +53,13 @@ public class PeerClient {
         }
     }
 
+    /**
+     * Sends a message to a peer to relocate itself to the given coordinates
+     * @param hostOrIp host to send message to
+     * @param port port to send message to
+     * @param x x coordinate to relocate to
+     * @param y y coordinate to relocate to
+     */
     public void relocate(String hostOrIp, int port, int x, int y) {
         try {
             MessageChannel channel = messageChannelFactory.getChannel(hostOrIp, port);
@@ -49,6 +73,13 @@ public class PeerClient {
         }
     }
 
+    /**
+     * Sends a message to a peer to start a multicast relocate of all nodes to given coordinates
+     * @param hostOrIp host to send message to
+     * @param port port to send message to
+     * @param x x coordinate to relocate to
+     * @param y y coordinate to relocate to
+     */
     public void multicastRelocate(String hostOrIp, int port, int x, int y) {
         try {
             MessageChannel channel = messageChannelFactory.getChannel(hostOrIp, port);

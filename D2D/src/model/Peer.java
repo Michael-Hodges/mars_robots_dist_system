@@ -39,6 +39,9 @@ public interface Peer {
      */
     void sendRegisterRequestTo(Peer peer);
 
+    /**
+     * Searches for nodes close enough to talk to on shortwave radio.
+     */
     void discoverLocalGroup();
 
     /**
@@ -63,6 +66,16 @@ public interface Peer {
      * @return list of this peers neighbors
      */
     List<Peer> getPeers();
+
+    /**
+     * Gets the status of a Peer
+     * @return the status of this peer
+     */
     PeerImpl.Status getStatus();
+
+    /**
+     * Sets the status of a peer
+     * @param status the status to set for this peer
+     */
     void setStatus(PeerImpl.Status status);
 }

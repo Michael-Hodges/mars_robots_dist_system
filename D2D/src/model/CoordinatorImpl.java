@@ -3,9 +3,15 @@ package model;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Simple implementation of a Coordinator.
+ */
 public class CoordinatorImpl implements Coordinator {
     List<Address> registeredNodes;
 
+    /**
+     * Constructor for the coordinator implementation
+     */
     public CoordinatorImpl() {
         registeredNodes = new ArrayList<>();
     }
@@ -24,6 +30,10 @@ public class CoordinatorImpl implements Coordinator {
         return a.port;
     }
 
+    /**
+     * Returns the most recently registered node
+     * @return the most recently registered node
+     */
     private Address getLastRegistered() {
         return registeredNodes.get(registeredNodes.size() - 1);
     }
@@ -37,9 +47,18 @@ public class CoordinatorImpl implements Coordinator {
         return nodes;
     }
 
+    /**
+     * A representation of an address with a host and port
+     */
     private class Address {
         String hostOrIP;
         int port;
+
+        /**
+         * Creates a new address object
+         * @param hostOrIP host/ip of the address
+         * @param port port of the address
+         */
         public Address(String hostOrIP, int port) {
             this.hostOrIP = hostOrIP;
             this.port = port;
