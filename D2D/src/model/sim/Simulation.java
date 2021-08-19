@@ -100,15 +100,15 @@ public class Simulation {
      * sending the command as a multicast command to a random peer.
      */
     private void movePeersHome() {
-        movePeers();
-        Logger.log("Sleeping for 2 seconds to allow peers to move");
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        Logger.log("Multicasting peers to return to base");
+//        movePeers();
+//        Logger.log("Sleeping for 2 seconds to allow peers to move");
+//        try {
+//            Thread.sleep(2000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
         Peer p = randomPeer();
+        Logger.log("Multicasting peers to return to base. Starting at " + p);
         // set home to a random location
         int x = random.nextInt(1000);
         int y = random.nextInt(1000);
