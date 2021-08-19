@@ -45,11 +45,11 @@ public class TCPServer {
 
         ServerSocket server = new ServerSocket(this.port);
         log("Server initialized on port " + port);
-        server.setSoTimeout(3000);
 
         while (true) {
             this.requestCounter++;
             Socket incomingSocket = server.accept();
+            incomingSocket.setSoTimeout(3000);
             MessageChannel channel = new TCPMessageChannelImpl(incomingSocket);
             log("Client connected.");
             Thread t = new Thread(() -> messageRouter.route(this.requestCounter, channel));

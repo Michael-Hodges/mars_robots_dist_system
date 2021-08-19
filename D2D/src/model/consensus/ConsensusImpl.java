@@ -2,6 +2,7 @@ package model.consensus;
 
 
 import model.ActionPeerEvent;
+import model.Logger;
 import model.PeerEvent;
 
 import java.awt.event.ActionEvent;
@@ -23,12 +24,13 @@ public class ConsensusImpl implements Consensus {
     public void run() {
         while (true) {
             try {
+                Logger.log("Beginning Consensus");
                 for (ConsensusParticipant potentiallyUnresponsive : this.participantList) {
                    this.runConsensus(potentiallyUnresponsive, this.participantList);
                 }
-                Thread.sleep(10000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
-                // ignore
+                e.printStackTrace();
             }
         }
     }

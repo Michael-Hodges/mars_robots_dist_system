@@ -69,7 +69,7 @@ public interface Peer {
     /**
      *
      */
-    void identifyUnresponsiveNodes();
+    void startIdentifyUnresponsiveNodes();
 
 
     /**
