@@ -262,7 +262,7 @@ public class PeerImpl implements Peer, ActionListener {
                     updatePeerStatus(p, Status.Leader);
                     break;
                 default:
-                    updatePeerStatus(p, Status.Unknown);
+                    //updatePeerStatus(p, Status.Unknown);
                     break;
             }
         }
@@ -329,11 +329,8 @@ public class PeerImpl implements Peer, ActionListener {
     @Override
     public synchronized void discoverLocalGroup() {
 
-        for(Peer p : peers) {
-            p.setStatus(Status.Unknown);
-        }
-
         Collection<Integer> ports = this.shortwaveRadio.getIdPortMap().values();
+        List<Peer> seen = new ArrayList<>();
 
         for(Integer port : ports) {
             port = convertToPeerPort(port);
@@ -341,8 +338,16 @@ public class PeerImpl implements Peer, ActionListener {
             if (p != null) {
                 p.setStatus(Status.Up);
             }
+            seen.add(p);
         }
-        sendEventToListener(PeerEvent.PeerStatusUpdated);
+
+        for(Peer p : peers) {
+            if (!seen.contains(p)) {
+                p.setStatus(Status.Unknown);
+            }
+        }
+
+        //sendEventToListener(PeerEvent.PeerStatusUpdated);
     }
 
     @Override

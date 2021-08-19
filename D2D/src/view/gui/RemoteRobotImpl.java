@@ -19,23 +19,23 @@ public class RemoteRobotImpl implements RemoteRobot {
     }
 
     @Override
-    public void setStatus(RobotStatus status) {
+    public synchronized void setStatus(RobotStatus status) {
         this.wrappedRobot.setStatus(status);
     }
 
     @Override
-    public void addPeer(String label) throws RemoteException {
+    public synchronized void addPeer(String label) throws RemoteException {
         this.wrappedRobot.addPeer(label);
     }
 
     @Override
-    public void clearPeers() throws RemoteException {
+    public synchronized void clearPeers() throws RemoteException {
         this.wrappedRobot.removeAllPeers();
     }
 
 
     @Override
-    public void updatePeerStatus(String label, RobotStatus status) throws RemoteException {
+    public synchronized void updatePeerStatus(String label, RobotStatus status) throws RemoteException {
         this.wrappedRobot.setPeerStatus(label, status);
     }
 }

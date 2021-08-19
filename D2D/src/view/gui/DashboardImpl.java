@@ -50,7 +50,7 @@ public class DashboardImpl extends JPanel implements Dashboard {
     }
 
     @Override
-    public void addEntity(Entity e) {
+    public synchronized void addEntity(Entity e) {
         this.world.addEntity(e);
         refreshLayout();
     }
