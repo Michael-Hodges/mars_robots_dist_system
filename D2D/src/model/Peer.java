@@ -1,6 +1,5 @@
 package model;
 
-
 import java.awt.event.ActionListener;
 import java.util.List;
 
@@ -16,4 +15,5 @@ public interface Peer {
     Peer getLeader();
     void add(Peer peer);
     List<Peer> getPeers();
+    void identifyUnresponsiveNodes();
 }

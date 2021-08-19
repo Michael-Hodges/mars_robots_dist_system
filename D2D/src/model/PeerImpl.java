@@ -5,6 +5,7 @@ import controller.tcp.TCPServer;
 import model.bully.BullyAlgorithmParticipant;
 import model.bully.BullyAlgorithmParticipantImpl;
 import model.bully.BullyMessageListenerFactoryImpl;
+import model.consensus.*;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,7 +22,7 @@ public class PeerImpl implements Peer {
         Register,
         ElectLeader,
         MulticastRegister,
-        MulticastElectLeader
+        MulticastElectLeader,
     }
 
     ActionListener listener;
@@ -31,6 +32,7 @@ public class PeerImpl implements Peer {
     BullyAlgorithmParticipant selfBullyParticipant;
     MessageChannelFactory messageChannelFactory;
     MulticastSession multicastSession;
+    ConsensusParticipant selfConsensusParticipant;
 
     public PeerImpl(String hostOrIP, int port, MessageChannelFactory messageChannelFactory) {
 
@@ -41,6 +43,7 @@ public class PeerImpl implements Peer {
         this.selfBullyParticipant = new BullyAlgorithmParticipantImpl("localhost", port, port,
                 messageChannelFactory);
         this.multicastSession = new MulticastSession();
+        this.selfConsensusParticipant = new ConsensusParticipantImpl(this.getHostOrIp(), this.getPort(), messageChannelFactory);
     }
 
     @Override
@@ -82,6 +85,7 @@ public class PeerImpl implements Peer {
 
         server.register("peer", new PeerMessageListenerFactory());
         server.register("bully", bullyDelegate);
+        server.register("consensus", new ConsensusListenerFactory(this.selfConsensusParticipant));
         try {
             registerWithPeers();
             server.run();
@@ -139,6 +143,22 @@ public class PeerImpl implements Peer {
     @Override
     public List<Peer> getPeers() {
         return this.peers;
+    }
+
+    @Override
+    public void identifyUnresponsiveNodes() {
+        Consensus consensus = new ConsensusImpl(selfConsensusParticipant, this.convertPeersToConsensusParticipants());
+        // TODO: consensus.addListener(this);
+        new Thread(consensus).start();
+    }
+
+    private List<ConsensusParticipant> convertPeersToConsensusParticipants() {
+        List<ConsensusParticipant> consensusParticipants = new ArrayList<>();
+        for (Peer peer : peers) {
+            consensusParticipants.add(new ConsensusParticipantImpl(peer.getHostOrIp(), peer.getPort()));
+        }
+
+        return consensusParticipants;
     }
 
     void addAsBullyParticipant(Peer peer) {
