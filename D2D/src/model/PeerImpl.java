@@ -444,6 +444,7 @@ public class PeerImpl implements Peer, ActionListener {
      */
     void stopServer() {
         this.server.stopServer();
+        this.shortwaveRadio.stopListener();
         this.shortwaveThread.stop();
         this.consensusThread.stop();
     }

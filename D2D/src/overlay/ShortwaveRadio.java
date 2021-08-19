@@ -28,6 +28,7 @@ public class ShortwaveRadio implements Runnable
     //private BroadcastListener multiCastListener;
     private BroadcastListener multiCastListener;
     private ActionListener listener;
+    private Thread t;
 
     /**
      * Constructs new shortwave radio and starts listener on a new thread
@@ -51,7 +52,8 @@ public class ShortwaveRadio implements Runnable
         this.multiCastListener = new BroadcastListener(this.x, this.y, this.multiCastPort, this.localPort, this.multiCastSubnet, this.uID, this.idPortMap);
         this.msgIds = new ArrayList<>();
         this.listener = null;
-        new Thread(this.multiCastListener).start();
+        this.t = new Thread(this.multiCastListener);
+        this.t.start();
     }
 
     /**
@@ -189,6 +191,10 @@ public class ShortwaveRadio implements Runnable
         }
     }
 
+    public void stopListener()
+    {
+        this.t.stop();
+    }
 
     /**
      * Main function
