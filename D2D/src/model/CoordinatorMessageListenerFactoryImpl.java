@@ -9,15 +9,24 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.List;
 
-
+/**
+ * Implementation of a MessageListenerFactory for use by a coordinator
+ */
 public class CoordinatorMessageListenerFactoryImpl implements MessageListenerFactory {
-
+    /**
+     * Messages a coordinator would use
+     */
     enum Message {
         Register,
         GetNodes
     }
 
     Coordinator coordinator;
+
+    /**
+     * Constructs new factory for a given constructor
+     * @param coordinator coordinator to use with this factory
+     */
     public CoordinatorMessageListenerFactoryImpl(Coordinator coordinator) {
         this.coordinator = coordinator;
     }
@@ -27,7 +36,9 @@ public class CoordinatorMessageListenerFactoryImpl implements MessageListenerFac
         return new CoordinatorProcess();
     }
 
-
+    /**
+     * Process used to handle action events for the coordinator
+     */
     class CoordinatorProcess implements ActionListener {
         MessageChannel channel;
 
@@ -44,6 +55,11 @@ public class CoordinatorMessageListenerFactoryImpl implements MessageListenerFac
             }
         }
 
+        /**
+         * Handles the message input from the ActionEvent
+         * @param message message to determine action
+         * @throws IOException Java io/socket errors
+         */
         private void handleInput(Message message) throws IOException {
 
             switch(message) {
@@ -59,6 +75,10 @@ public class CoordinatorMessageListenerFactoryImpl implements MessageListenerFac
             channel.close();
         }
 
+        /**
+         * Registers node with the coordinator.
+         * @throws IOException Java socket/io exceptions
+         */
         private void onRegister() throws IOException {
             String hostOrIp = channel.readNextString();
             CoordinatorMessageListenerFactoryImpl.this.log("Registering node: " + hostOrIp);
@@ -68,6 +88,10 @@ public class CoordinatorMessageListenerFactoryImpl implements MessageListenerFac
             channel.flush();
         }
 
+        /**
+         * Returns nodes to the requester
+         * @throws IOException Java socket/io exceptions
+         */
         private void onGetNodes() throws IOException {
             CoordinatorMessageListenerFactoryImpl.this.log("Retrieving nodes...");
             List<String> nodes = CoordinatorMessageListenerFactoryImpl.this.coordinator.getNodes();

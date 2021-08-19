@@ -8,16 +8,28 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Concrete implementation of ChaosMessageRouter, and the RouteStrategy
+ */
 public class TCPChaosMessageRouteImpl implements ChaosMessageRouter, RouteStrategy {
 
     RouteStrategy wrappedRouteStrategy;
     List<String> blockedRoutes;
 
+    /**
+     * Constructs new TCPChaosMessage Route
+     * @param routeStrategy the routeStrategy to use
+     */
     public TCPChaosMessageRouteImpl(RouteStrategy routeStrategy) {
         this.wrappedRouteStrategy = routeStrategy;
         this.blockedRoutes = new ArrayList<>();
     }
 
+    /**
+     * Returns the MessageRoute, a new MessageRoute with identifier of chaos, with a new
+     * ChaosListener Factory
+     * @return a new MessageRoute
+     */
     public MessageRoute getRoute() {
         return new MessageRoute("chaos", new ChaosListenerFactory());
     }
@@ -47,7 +59,9 @@ public class TCPChaosMessageRouteImpl implements ChaosMessageRouter, RouteStrate
         log("Disabling block for " + route + " messages.");
     }
 
-
+    /**
+     * Creates new ChaosListener objects
+     */
     class ChaosListenerFactory implements MessageListenerFactory {
 
         @Override
@@ -56,6 +70,9 @@ public class TCPChaosMessageRouteImpl implements ChaosMessageRouter, RouteStrate
         }
     }
 
+    /**
+     * ActionListener for ChaosOperation events.
+     */
     class ChaosListener implements ActionListener {
 
         @Override
@@ -75,14 +92,27 @@ public class TCPChaosMessageRouteImpl implements ChaosMessageRouter, RouteStrate
             }
         }
 
+        /**
+         * Blocks the route specified in the channel
+         * @param channel channel carrying communication
+         */
         void onBlockMessage(MessageChannel channel) {
             TCPChaosMessageRouteImpl.this.blockRoute(readRoute(channel));
         }
 
+        /**
+         * Unblocks the route specified in the channel
+         * @param channel channel carrying communication
+         */
         void onUnblockMessage(MessageChannel channel) {
             TCPChaosMessageRouteImpl.this.unblockRoute(readRoute(channel));
         }
 
+        /**
+         * Reads the route out of the channel
+         * @param channel channel to read route of
+         * @return the route from the channel
+         */
         String readRoute(MessageChannel channel) {
             String route = null;
             try {
@@ -95,6 +125,10 @@ public class TCPChaosMessageRouteImpl implements ChaosMessageRouter, RouteStrate
 
     }
 
+    /**
+     * Logs given string to console
+     * @param message message to log to console
+     */
     void log(String message) {
         Logger.log(message);
     }

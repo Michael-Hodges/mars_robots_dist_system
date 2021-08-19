@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.Scanner;
 import java.util.UUID;
 
+/**
+ * Broadcast listener for receiving messages from a shortwave radio
+ */
 public class BroadcastListener implements Runnable
 {
     private int x;
@@ -17,9 +20,19 @@ public class BroadcastListener implements Runnable
     private HashMap<UUID, Integer> idPortMap;
     private UUID uID;
     private int localPort;
-    private double multicastDist = 25;
+    private double multicastDist = 300;
 
-
+    /**
+     * Constructs a new Broadcast listener
+     * @param x x coordinate of robot
+     * @param y y coordinate of robot
+     * @param mulitcastPortNum multicast port number to listen on
+     * @param localPortNum local port number to use to send packets
+     * @param subnet subnet to join for multicast messages
+     * @param localUUID ID of this object
+     * @param idPortMap map of id:port for neighbor objects
+     * @throws IOException Java IO/socket exceptions
+     */
     public BroadcastListener(int x, int y, int mulitcastPortNum, int localPortNum, InetAddress subnet, UUID localUUID, HashMap<UUID, Integer> idPortMap) throws IOException
     {
         this.x = x;
@@ -31,17 +44,28 @@ public class BroadcastListener implements Runnable
         this.idPortMap = idPortMap;
     }
 
+    /**
+     * Checks the distance from this robot to a given point
+     * @param x x coord to check distance to
+     * @param y y coord to check distance to
+     * @return true if we are within multicast range
+     */
     public boolean checkDist(int x, int y)
     {
         int calcX = Math.abs(this.x - x);
         int calcY = Math.abs(this.y - y);
-        if ((calcX*calcY) < this.multicastDist)
+        double dist = Math.sqrt((calcX * calcX) + (calcY * calcY));
+        System.out.println(String.format("(%d,%d) to (%d,%d) is %.2f", this.x, this.y, x, y, dist));
+        if (dist < this.multicastDist)
         {
             return true;
         }
-        else return false;
+        return false;
     }
 
+    /**
+     * Runs a receiver to receive pings from other robots
+     */
     public void run()
     {
         while (true)
@@ -64,6 +88,8 @@ public class BroadcastListener implements Runnable
                     System.out.println("Received ping from: " + receivedUUID);
                     this.seqNumMap.put(receivedUUID, receivedSeqNum);
                     pong(recv.getAddress(), recv.getPort());
+                } else if (!checkDist(receivedX, receivedY)) {
+                    System.out.println(receivedUUID + "is too far away.");
                 }
             }
             catch (IOException e)
@@ -75,6 +101,12 @@ public class BroadcastListener implements Runnable
         }
     }
 
+    /**
+     * Replies to pings from other robots
+     * @param responseAddress address to respond to
+     * @param portNumber port number to respond to
+     * @throws IOException Java socket/io exceptions
+     */
     public void pong(InetAddress responseAddress, int portNumber) throws IOException
     {
         String responseString = this.uID.toString() + " " + this.localPort;
@@ -83,14 +115,24 @@ public class BroadcastListener implements Runnable
         this.s.send(responseMessage);
     }
 
+    /**
+     * Update this objects coordinates
+     * @param x x coord to move to
+     * @param y y coord to move to
+     */
     public void updateCoords(int x, int y)
     {
         this.x = x;
         this.y = y;
-        System.out.println("Updated coords: " + this.x + this.y);
+        System.out.println("Updated coords: " + this.x + "," + this.y);
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException
+    /**
+     * Main function
+     * @param args Program arguments
+     * @throws IOException Java socket/io exception
+     */
+    public static void main(String[] args) throws IOException
     {
         InetAddress group = InetAddress.getByName("228.5.6.7");
         UUID localID = UUID.randomUUID();

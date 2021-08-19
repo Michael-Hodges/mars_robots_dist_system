@@ -1,11 +1,12 @@
 package view.gui;
 
-import model.Peer;
-
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
 
+/**
+ * Implementation of a Robot
+ */
 public class RobotImpl implements Entity, Robot {
 
 
@@ -19,12 +20,19 @@ public class RobotImpl implements Entity, Robot {
     private Color upColor = Color.green;
     private Color downColor = Color.red;
     private Color leaderColor = Color.yellow;
+    private Color unknownColor = Color.gray;
     private Color textColor = Color.BLACK;
     private Random random = new Random();
     private String label = null;
     RobotStatus status;
     java.util.List<Robot> peers;
 
+    /**
+     * Constructs a new Robot
+     * @param label label to assign to Robot
+     * @param x x coordinate to place the robot
+     * @param y y coordinate to place the robot
+     */
     public RobotImpl(String label, int x, int y) {
         this.label = label;
         this.color = Color.GREEN;
@@ -36,14 +44,17 @@ public class RobotImpl implements Entity, Robot {
         this.status = RobotStatus.Up;
     }
 
+    @Override
     public void move(int amount) {
         this.moveDistance = amount;
     }
 
+    @Override
     public void rotate(int degrees) {
         this.angle += degrees;
     }
 
+    @Override
     public void setLabel(String label) {
         this.label = label;
     }
@@ -68,7 +79,13 @@ public class RobotImpl implements Entity, Robot {
 
     @Override
     public void removePeer(String label) {
-        this.peers.remove(label);
+        Robot peer = new RobotImpl(label,0,0);
+        this.peers.remove(peer);
+    }
+
+    @Override
+    public void removeAllPeers() {
+        this.peers = new ArrayList<>();
     }
 
     @Override
@@ -100,6 +117,11 @@ public class RobotImpl implements Entity, Robot {
         return this.size;
     }
 
+    /**
+     * Convert Cartesian coordinates to polar coordinates
+     * @param cartesianCoords cartesian coordinates to convert
+     * @return a point in polar coordinates
+     */
     Point toPolar(Point cartesianCoords) {
         double direction = Math.sqrt(cartesianCoords.x * cartesianCoords.x + cartesianCoords.y * cartesianCoords.y);
         double theta = 0;
@@ -110,6 +132,12 @@ public class RobotImpl implements Entity, Robot {
         return new Point((int)direction, (int)theta);
     }
 
+    /**
+     * Convert polar coordinates to cartesian coordinates
+     * @param r radius of coords
+     * @param angle angle of coords
+     * @return new cartesian point
+     */
     Point toCartesian(int r, int angle) {
         double theta = Math.toRadians(angle);
         int x = (int)(r * Math.cos(theta));
@@ -117,6 +145,7 @@ public class RobotImpl implements Entity, Robot {
         return new Point(x, y);
     }
 
+    @Override
     public void draw(Graphics g) {
         Color c = color;
         switch(status) {
@@ -130,6 +159,7 @@ public class RobotImpl implements Entity, Robot {
                 c = this.leaderColor;
                 break;
             default:
+                c = this.unknownColor;
                 break;
         }
 
@@ -146,14 +176,23 @@ public class RobotImpl implements Entity, Robot {
         }
     }
 
+    /**
+     * Get the x coordinate of the center
+     * @return x coordinate of the center
+     */
     private int getCenterX() {
         return x + (size / 2);
     }
 
+    /**
+     * Get the y coordinate of the center
+     * @return y coordinate of the center
+     */
     private int getCenterY() {
         return y + (size / 2);
     }
 
+    @Override
     public void update(World w) {
         if (this.moveDistance > 0) {
             Point delta = this.toCartesian(this.speed, this.angle);
@@ -171,10 +210,21 @@ public class RobotImpl implements Entity, Robot {
         this.y = y;
     }
 
+    /**
+     * Set the color of the robot
+     * @param color color to set for the robot
+     */
     public void setColor(Color color) {
         this.color = color;
     }
 
+    /**
+     * Calculate the location to draw peers around this robot
+     * @param peerIndex which peer are we drawing
+     * @param numberOfPeers how many total peers are there
+     * @param peerSize what size do we want the peer
+     * @return a new point to tell where the peer should go
+     */
     private Point calculatePeerPosition(int peerIndex, int numberOfPeers, int peerSize) {
         int angleOffset = peerIndex * (360 / numberOfPeers) - 135;
         int distOffset = (int)(this.size * 0.75);

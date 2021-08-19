@@ -1,5 +1,6 @@
 package model.bully;
 
+import model.ActionPeerEvent;
 import model.Logger;
 import controller.MessageChannel;
 import controller.MessageChannelFactory;
@@ -11,8 +12,24 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Concrete implementation of a member of the bully algorithm
+ */
 public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
 
+    /**
+     * Current status of participant
+     */
+    public enum Status {
+        Up,
+        Down,
+        Leader,
+        Unknown,
+    }
+
+    /**
+     * Message types for the bully algorithm
+     */
     enum Message {
         Election,
         Answer,
@@ -26,10 +43,18 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     private int countOfAnswers;
     private int port;
     private String hostOrIp;
-    private ActionListener listener;
+    private List<ActionListener> listeners;
     int timeoutInMilliseconds = 200;
     private MessageChannelFactory messageChannelFactory;
+    private Status status;
 
+    /**
+     * Constructs a new bully algorithm participant
+     * @param hostOrIp host/ip to use for this participant
+     * @param port port to use for this participant
+     * @param processId processId to use for this participant
+     * @param messageChannelFactory messagechannelFactory to use for this participant
+     */
     public BullyAlgorithmParticipantImpl(String hostOrIp, int port, int processId,
                                          MessageChannelFactory messageChannelFactory) {
         this.hostOrIp = hostOrIp;
@@ -39,7 +64,8 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         this.otherParticipants = new ArrayList<>();
         this.coordinator = null;
         this.countOfAnswers = 0;
-        this.listener = null;
+        this.listeners = new ArrayList<>();
+        this.status = Status.Unknown;
     }
 
     @Override
@@ -68,7 +94,9 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     @Override
     public void sendVictory(BullyAlgorithmParticipant p) {
         this.coordinator = this;
+        this.status = Status.Leader;
         this.send(p, Message.Victory);
+        this.sendEventToListener(PeerEvent.BullyReceiveVictory, this, Status.Leader);
     }
 
     @Override
@@ -96,30 +124,32 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         }
     }
 
+    @Override
     public void onAnswerMessage(int receivedProcessId) {
         countOfAnswers++;
+        BullyAlgorithmParticipant p = lookup(receivedProcessId);
         if (receivedProcessId > this.getProcessId()) {
             awaitVictoryMessage();
         }
-        sendEventToListener(PeerEvent.BullyReceiveAnswer);
+        sendEventToListener(PeerEvent.BullyReceiveAnswer, p, Status.Up);
     }
 
-
+    @Override
     public void onElectionMessage(int receivedProcessId) {
+        BullyAlgorithmParticipant p = lookup(receivedProcessId);
         if (receivedProcessId < this.getProcessId()) {
-            BullyAlgorithmParticipant p = lookup(receivedProcessId);
             sendAnswer(p);
             startElection();
         }
-        sendEventToListener(PeerEvent.BullyReceiveElectionMessage);
+        sendEventToListener(PeerEvent.BullyReceiveElectionMessage, p, Status.Up);
     }
 
+    @Override
     public void onVictoryMessage(int receivedProcessId) {
         log("Leader: " + receivedProcessId);
         this.coordinator = this.lookup(receivedProcessId);
-        sendEventToListener(PeerEvent.BullyReceiveVictory);
+        sendEventToListener(PeerEvent.BullyReceiveVictory, this.coordinator, Status.Leader);
     }
-
 
     @Override
     public boolean didReceiveAnswerMessages() {
@@ -137,8 +167,8 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
     }
 
     @Override
-    public void setListener(ActionListener listener) {
-        this.listener = listener;
+    public void addListener(ActionListener listener) {
+        this.listeners.add(listener);
     }
 
 
@@ -146,6 +176,11 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         //we just await our victory
     }
 
+    /**
+     * Returns the participant object from list of other participants based on id
+     * @param processId participant id to find
+     * @return participant with given id
+     */
     private BullyAlgorithmParticipant lookup(int processId) {
         for(BullyAlgorithmParticipant p : this.otherParticipants) {
             if (p.getProcessId() == processId) {
@@ -155,7 +190,11 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         throw new IllegalArgumentException("Unable to find Bully participant with " + processId);
     }
 
-
+    /**
+     * Sends a given message to the given target, using message channels.
+     * @param target participant to send a message to
+     * @param message message to send to the participant
+     */
     private void send(BullyAlgorithmParticipant target, Message message) {
         log(message.name());
         sendMessageToListener(message);
@@ -170,19 +209,45 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         }
     }
 
+    /**
+     * Sends a given message to the listener as a PeerEvent
+     * @param message message to send to the listener
+     */
     private void sendMessageToListener(Message message) {
         PeerEvent event = toPeerEvent(message);
         sendEventToListener(event);
     }
 
+    /**
+     * Sends a given peerevent to the listener
+     * @param event event to send to the listener
+     */
     private void sendEventToListener(PeerEvent event) {
+        sendEventToListener(event, null, Status.Unknown);
+    }
+
+    /**
+     * Sends a PeerEvent to the listener as a BullyActionEvent
+     * @param event PeerEvent to wrap
+     * @param respondent respondent to wrap in the BullyActionEvent
+     * @param respondentStatus status to apply to the respondent
+     */
+    private void sendEventToListener(PeerEvent event, BullyAlgorithmParticipant respondent,
+                                     BullyAlgorithmParticipantImpl.Status respondentStatus) {
         int id = BullyAlgorithmParticipantImpl.EVENT_ID_COUNTER++;
-        if (this.listener != null) {
-            ActionEvent e = new ActionEvent(this, id, event.toString());
-            this.listener.actionPerformed(e);
+        for(ActionListener listener : listeners) {
+            BullyActionEvent e = new BullyActionEvent(this, id, event);
+            e.respondent = respondent;
+            e.respondentStatus = respondentStatus;
+            listener.actionPerformed(e);
         }
     }
 
+    /**
+     * Converts message into a peerEvent
+     * @param message message to translate
+     * @return peer event version of the message
+     */
     private PeerEvent toPeerEvent(Message message) {
         switch(message) {
             case Answer:
@@ -196,7 +261,10 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         }
     }
 
-
+    /**
+     * Logs a given string
+     * @param msg string to log
+     */
     private void log(String msg) {
         Logger.log(msg);
     }
