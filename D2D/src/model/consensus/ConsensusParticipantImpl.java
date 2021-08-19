@@ -6,6 +6,7 @@ import model.Logger;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.Objects;
 
 public class ConsensusParticipantImpl implements ConsensusParticipant {
 
@@ -17,7 +18,6 @@ public class ConsensusParticipantImpl implements ConsensusParticipant {
     private final String hostOrIp;
     private final int port;
     private MessageChannelFactory messageChannelFactory;
-    private final String CONSENSUS = "consensus";
 
     public ConsensusParticipantImpl(String hostOrIp, int port, MessageChannelFactory messageChannelFactory) {
         this.hostOrIp = hostOrIp;
@@ -34,7 +34,7 @@ public class ConsensusParticipantImpl implements ConsensusParticipant {
     public boolean ping(ConsensusParticipant unresponsiveParticipant) {
         try {
             MessageChannel messageChannel = messageChannelFactory.getChannel(unresponsiveParticipant.getHostOrIp(), unresponsiveParticipant.getPort());
-            messageChannel.writeString(this.CONSENSUS);
+            messageChannel.writeString("consensus");
             messageChannel.writeString(Operation.Ping.name());
 
             String response = messageChannel.readNextString();
@@ -55,17 +55,22 @@ public class ConsensusParticipantImpl implements ConsensusParticipant {
     @Override
     public boolean requestPing(ConsensusParticipant friend, ConsensusParticipant target) {
         try {
+            Logger.log("CONSENSUS: sending ping from " + friend.getHostOrIp() + " " + friend.getPort()
+                            + " to " + target.getHostOrIp() + " " + target.getPort());
             MessageChannel messageChannel = messageChannelFactory.getChannel(friend.getHostOrIp(), friend.getPort());
-            messageChannel.writeString(this.CONSENSUS);
+            messageChannel.writeString("consensus");
             messageChannel.writeString(Operation.RequestPing.name());
             messageChannel.writeString(target.getHostOrIp());
             messageChannel.writeInt(target.getPort());
 
             String response = messageChannel.readNextString();
             messageChannel.close();
-            Logger.log("Ping request response received: " + response);
+            Logger.log("CONSENSUS: Ping request response received: " + response);
 
             return response.equals("success");
+        } catch (SocketTimeoutException e) {
+            Logger.log("CONSENSUS: " + e.getMessage());
+            return false;
         } catch (IOException e) {
             Logger.log("IOException occurred in ConsensusParticipant");
             return false;
@@ -81,4 +86,25 @@ public class ConsensusParticipantImpl implements ConsensusParticipant {
         return port;
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ConsensusParticipantImpl that = (ConsensusParticipantImpl) o;
+        return port == that.port && Objects.equals(hostOrIp, that.hostOrIp) && Objects.equals(messageChannelFactory, that.messageChannelFactory);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(hostOrIp, port, messageChannelFactory);
+    }
+
+    @Override
+    public String toString() {
+        return "ConsensusParticipantImpl{" +
+                "hostOrIp='" + hostOrIp + '\'' +
+                ", port=" + port +
+                '}';
+    }
 }

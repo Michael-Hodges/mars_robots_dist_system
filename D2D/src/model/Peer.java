@@ -1,5 +1,7 @@
 package model;
 
+import model.consensus.ConsensusParticipant;
+
 import java.awt.event.ActionListener;
 import java.util.List;
 
@@ -70,6 +72,7 @@ public interface Peer {
      *
      */
     void startIdentifyUnresponsiveNodes();
+
 
 
     /**

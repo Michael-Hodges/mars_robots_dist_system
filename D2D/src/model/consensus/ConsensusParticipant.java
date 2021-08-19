@@ -2,6 +2,8 @@ package model.consensus;
 
 import controller.MessageChannelFactory;
 
+import java.util.List;
+
 public interface ConsensusParticipant {
 
     /**
@@ -23,7 +25,6 @@ public interface ConsensusParticipant {
     String getHostOrIp();
 
     int getPort();
-
 
 
 }

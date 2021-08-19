@@ -42,22 +42,22 @@ public class PeerImpl implements Peer, ActionListener {
                 onConsensusNodeReachable((ConsensusImpl.ConsensusAction)e);
                 break;
             case ConsensusNodeUnreachable:
-                onConsensusNodeUnReachable((ConsensusImpl.ConsensusAction)e);
+                onConsensusNodeUnreachable((ConsensusImpl.ConsensusAction)e);
                 break;
         }
     }
 
-    private void onConsensusNodeUnReachable(ConsensusImpl.ConsensusAction e) {
+    private void onConsensusNodeUnreachable(ConsensusImpl.ConsensusAction e) {
         Peer unreachablePeer = this.locatePeer(e.getHostOrIp(), e.getPort());
         // We could remove the peer but for demo purposes we just flag it
         updatePeerStatus(unreachablePeer, Status.Down);
-        Logger.log("Could not reach " + unreachablePeer);
+        Logger.log("CONSENSUS: Could not reach " + unreachablePeer);
     }
 
     private void onConsensusNodeReachable(ConsensusImpl.ConsensusAction e) {
         Peer reachablePeer = this.locatePeer(e.getHostOrIp(), e.getPort());
         updatePeerStatus(reachablePeer, Status.Up);
-        Logger.log("Reached " + reachablePeer);
+        Logger.log("CONSENSUS: Reached " + reachablePeer);
     }
 
     /**
@@ -374,14 +374,14 @@ public class PeerImpl implements Peer, ActionListener {
 
     @Override
     public void startIdentifyUnresponsiveNodes() {
-        Consensus consensus = new ConsensusImpl(selfConsensusParticipant, this.convertPeersToConsensusParticipants());
+        Consensus consensus = new ConsensusImpl(selfConsensusParticipant, this, this.convertPeersToConsensusParticipants());
         consensus.addListener(this);
         new Thread(consensus).start();
     }
 
     //TODO: This needs to be called within the loop inside the ConsensusImplementation
     //to ensure that we always get the most up-to-date list of participants
-    private List<ConsensusParticipant> convertPeersToConsensusParticipants() {
+    public List<ConsensusParticipant> convertPeersToConsensusParticipants() {
         List<ConsensusParticipant> consensusParticipants = new ArrayList<>();
         for (Peer peer : peers) {
             consensusParticipants.add(new ConsensusParticipantImpl(peer.getHostOrIp(), peer.getPort()));

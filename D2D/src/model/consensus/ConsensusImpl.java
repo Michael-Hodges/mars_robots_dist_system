@@ -3,28 +3,31 @@ package model.consensus;
 
 import model.ActionPeerEvent;
 import model.Logger;
+import model.Peer;
 import model.PeerEvent;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 
 public class ConsensusImpl implements Consensus {
-    private final List<ConsensusParticipant> participantList;
+    private List<ConsensusParticipant> participantList;
     private final ConsensusParticipant leader;
+    private final Peer selfPeer;
     private final List<ActionListener> listeners;
 
-    public ConsensusImpl(ConsensusParticipant leader, List<ConsensusParticipant> participantList) {
+    public ConsensusImpl(ConsensusParticipant leader, Peer selfPeer, List<ConsensusParticipant> participantList) {
         this.leader = leader;
         this.participantList = participantList;
+        this.selfPeer = selfPeer;
         this.listeners = new ArrayList<>();
     }
 
     @Override
     public void run() {
         while (true) {
+            Logger.log("CONSENSUS: Beginning Consensus");
             try {
-                Logger.log("Beginning Consensus");
+                this.updateParticipantList();
                 for (ConsensusParticipant potentiallyUnresponsive : this.participantList) {
                    this.runConsensus(potentiallyUnresponsive, this.participantList);
                 }
@@ -35,43 +38,51 @@ public class ConsensusImpl implements Consensus {
         }
     }
 
+    private void updateParticipantList() {
+        Logger.log("CONSENSUS: Updating participants list. Current " + this.participantList);
+        List<ConsensusParticipant> consensusParticipants = new ArrayList<>();
+        for (Peer peer : this.selfPeer.getPeers()) {
+            consensusParticipants.add(new ConsensusParticipantImpl(peer.getHostOrIp(), peer.getPort()));
+        }
+
+        this.participantList = consensusParticipants;
+        Logger.log("CONSENSUS: Updating participants list. New : " + this.participantList);
+    }
+
+
     private void runConsensus(ConsensusParticipant potentiallyUnresponsiveParticipant, List<ConsensusParticipant> allParticipants) {
-        List<Boolean> responses =  Collections.synchronizedList(new ArrayList<>());
-        List<ConsensusParticipant> otherParticipantList = new ArrayList<>(allParticipants);
-        otherParticipantList.remove(potentiallyUnresponsiveParticipant);
-        ListIterator<ConsensusParticipant> iterator  = otherParticipantList.listIterator();
+        int voteCounterReachable = 0;
 
-        // until we reach majority of the votes
-        while (responses.size() < otherParticipantList.size() / 2) {
-            if (iterator.hasNext()) {
-                ConsensusParticipant friend = iterator.next();
+        for (ConsensusParticipant friend : allParticipants) {
+            if (!friend.equals(potentiallyUnresponsiveParticipant)) {
+                boolean vote = this.leader.requestPing(friend, potentiallyUnresponsiveParticipant);
+                voteCounterReachable += vote ? 1 : 0;
 
-                if (!friend.equals(potentiallyUnresponsiveParticipant)) {
-                    responses.add(this.leader.requestPing(friend, potentiallyUnresponsiveParticipant));
-                }
-            } else {
-                break;
+                Logger.log("CONSENSUS: Friend " + friend.getHostOrIp() + " " + friend.getPort() + " voted " + vote
+                        + " for " + potentiallyUnresponsiveParticipant.getHostOrIp() + " "
+                        + potentiallyUnresponsiveParticipant.getPort());
             }
         }
 
-        long responsiveCount = responses.stream().filter(response -> response).count(); // counts how many True => responsive
-        long unResponsiveCount = responses.stream().filter(response -> !response).count(); // counts how many False
-        if(unResponsiveCount > responsiveCount) {
-            this.participantList.remove(potentiallyUnresponsiveParticipant);
-            this.onConsensusReachedPositive(potentiallyUnresponsiveParticipant);
+        Logger.log("CONSENSUS: finished. Votes for " + potentiallyUnresponsiveParticipant.getHostOrIp() + " "
+                + potentiallyUnresponsiveParticipant.getPort() + " is reachable "
+                + voteCounterReachable);
+
+        if (voteCounterReachable >= allParticipants.size() / 2) {
+            this.onConsensusNodeReachable(potentiallyUnresponsiveParticipant);
         } else {
-            this.onConsensusReachedNegative(potentiallyUnresponsiveParticipant);
+            this.onConsensusNodeUnreachable(potentiallyUnresponsiveParticipant);
         }
     }
 
-    private void onConsensusReachedNegative(ConsensusParticipant unResponsiveParticipant) {
+    private void onConsensusNodeUnreachable(ConsensusParticipant unResponsiveParticipant) {
         for (ActionListener listener : this.listeners) {
             listener.actionPerformed(new ConsensusAction(this, unResponsiveParticipant.getHostOrIp(),
                     unResponsiveParticipant.getPort(), PeerEvent.ConsensusNodeUnreachable));
         }
     }
 
-    private void onConsensusReachedPositive(ConsensusParticipant responsiveParticipant) {
+    private void onConsensusNodeReachable(ConsensusParticipant responsiveParticipant) {
         for (ActionListener listener : this.listeners) {
             listener.actionPerformed(new ConsensusAction(this, responsiveParticipant.getHostOrIp(),
                     responsiveParticipant.getPort(), PeerEvent.ConsensusNodeReachable));
