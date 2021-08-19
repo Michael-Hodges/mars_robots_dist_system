@@ -55,7 +55,7 @@ public class BroadcastListener implements Runnable
         int calcX = Math.abs(this.x - x);
         int calcY = Math.abs(this.y - y);
         double dist = Math.sqrt((calcX * calcX) + (calcY * calcY));
-        System.out.println(String.format("(%d,%d) to (%d,%d) is %.2f", this.x, this.y, x, y, dist));
+        //System.out.println(String.format("(%d,%d) to (%d,%d) is %.2f", this.x, this.y, x, y, dist));
         if (dist < this.multicastDist)
         {
             return true;
@@ -85,7 +85,7 @@ public class BroadcastListener implements Runnable
 
                 if (!receivedSeqNum.equals(this.seqNumMap.get(receivedUUID)) & checkDist(receivedX, receivedY))
                 {
-                    System.out.println("Received ping from: " + receivedUUID);
+                    //System.out.println("Received ping from: " + receivedUUID);
                     this.seqNumMap.put(receivedUUID, receivedSeqNum);
                     pong(recv.getAddress(), recv.getPort());
                 } else if (!checkDist(receivedX, receivedY)) {

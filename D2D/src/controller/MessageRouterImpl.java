@@ -39,7 +39,9 @@ public class MessageRouterImpl implements MessageRouter {
     @Override
     public void route(int requestId, MessageChannel channel) {
         String route = getRoute(channel);
+        Logger.log("Routing..." + route);
         String message = getMessage(channel);
+        Logger.log("Operation..." + message);
         for (MessageRoute p : this.messageRoutes) {
             if (p.identifier.equals(route)) {
                 MessageEvent messageEvent = new MessageEvent(this, requestId, channel, message);

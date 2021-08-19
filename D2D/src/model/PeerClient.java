@@ -92,4 +92,15 @@ public class PeerClient {
             e.printStackTrace();
         }
     }
+
+    public void stopServer(String hostOrIp, int port) {
+        try {
+            MessageChannel channel = messageChannelFactory.getChannel(hostOrIp, port);
+            channel.writeString("peer");
+            channel.writeString(PeerImpl.Operation.Stop.name());
+            channel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

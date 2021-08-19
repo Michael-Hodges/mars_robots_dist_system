@@ -25,12 +25,18 @@ public class ConsensusImpl implements Consensus {
     @Override
     public void run() {
         while (true) {
-            Logger.log("CONSENSUS: Beginning Consensus");
-            try {
+            selfPeer.electLeader();
+            int port = selfPeer.getLeader().getPort();
+            if (port == leader.getPort()) {
+                Logger.log("CONSENSUS: Beginning Consensus");
+
                 this.updateParticipantList();
                 for (ConsensusParticipant potentiallyUnresponsive : this.participantList) {
-                   this.runConsensus(potentiallyUnresponsive, this.participantList);
+                    this.runConsensus(potentiallyUnresponsive, this.participantList);
                 }
+            }
+
+            try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -39,14 +45,14 @@ public class ConsensusImpl implements Consensus {
     }
 
     private void updateParticipantList() {
-        Logger.log("CONSENSUS: Updating participants list. Current " + this.participantList);
+        //Logger.log("CONSENSUS: Updating participants list. Current " + this.participantList);
         List<ConsensusParticipant> consensusParticipants = new ArrayList<>();
         for (Peer peer : this.selfPeer.getPeers()) {
             consensusParticipants.add(new ConsensusParticipantImpl(peer.getHostOrIp(), peer.getPort()));
         }
 
         this.participantList = consensusParticipants;
-        Logger.log("CONSENSUS: Updating participants list. New : " + this.participantList);
+        //Logger.log("CONSENSUS: Updating participants list. New : " + this.participantList);
     }
 
 
@@ -58,15 +64,15 @@ public class ConsensusImpl implements Consensus {
                 boolean vote = this.leader.requestPing(friend, potentiallyUnresponsiveParticipant);
                 voteCounterReachable += vote ? 1 : 0;
 
-                Logger.log("CONSENSUS: Friend " + friend.getHostOrIp() + " " + friend.getPort() + " voted " + vote
-                        + " for " + potentiallyUnresponsiveParticipant.getHostOrIp() + " "
-                        + potentiallyUnresponsiveParticipant.getPort());
+//                Logger.log("CONSENSUS: Friend " + friend.getHostOrIp() + " " + friend.getPort() + " voted " + vote
+//                        + " for " + potentiallyUnresponsiveParticipant.getHostOrIp() + " "
+//                        + potentiallyUnresponsiveParticipant.getPort());
             }
         }
 
-        Logger.log("CONSENSUS: finished. Votes for " + potentiallyUnresponsiveParticipant.getHostOrIp() + " "
-                + potentiallyUnresponsiveParticipant.getPort() + " is reachable "
-                + voteCounterReachable);
+//        Logger.log("CONSENSUS: finished. Votes for " + potentiallyUnresponsiveParticipant.getHostOrIp() + " "
+//                + potentiallyUnresponsiveParticipant.getPort() + " is reachable "
+//                + voteCounterReachable);
 
         if (voteCounterReachable >= allParticipants.size() / 2) {
             this.onConsensusNodeReachable(potentiallyUnresponsiveParticipant);

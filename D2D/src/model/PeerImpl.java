@@ -71,7 +71,8 @@ public class PeerImpl implements Peer, ActionListener {
         MulticastRegister,
         MulticastElectLeader,
         MulticastUpdatePosition,
-        InitiateMulticastUpdatePosition
+        InitiateMulticastUpdatePosition,
+        Stop,
     }
 
     /**
@@ -88,11 +89,14 @@ public class PeerImpl implements Peer, ActionListener {
     String host;
     int port;
     List<Peer> peers;
+    TCPServer server;
     BullyAlgorithmParticipant selfBullyParticipant;
     MessageChannelFactory messageChannelFactory;
     MulticastSession multicastSession;
     ConsensusParticipant selfConsensusParticipant;
     ShortwaveRadio shortwaveRadio;
+    Thread consensusThread;
+    Thread shortwaveThread;
     Status status;
     UUID identity;
     int positionX;
@@ -208,7 +212,7 @@ public class PeerImpl implements Peer, ActionListener {
         MessageRouterImpl messageRouter = new MessageRouterImpl(chaosRouteStrategy);
         messageRouter.registerRoute(chaosRouteStrategy.getRoute());
 
-        TCPServer server = new TCPServer(this.port, messageRouter);
+        this.server = new TCPServer(this.port, messageRouter);
 
         server.register("peer", new PeerMessageListenerFactory());
         server.register("bully", bullyDelegate);
@@ -231,8 +235,8 @@ public class PeerImpl implements Peer, ActionListener {
     void startListeningOnShortwaveRadio() {
         this.shortwaveRadio = getShortwaveRadio();
         this.shortwaveRadio.setListener(this);
-        Thread t = new Thread(this.shortwaveRadio);
-        t.start();
+        this.shortwaveThread = new Thread(this.shortwaveRadio);
+        this.shortwaveThread.start();
     }
     /**
      * Registers this peer with its neighbors
@@ -258,7 +262,7 @@ public class PeerImpl implements Peer, ActionListener {
                     updatePeerStatus(p, Status.Leader);
                     break;
                 default:
-                    updatePeerStatus(p, Status.Up);
+                    updatePeerStatus(p, Status.Unknown);
                     break;
             }
         }
@@ -376,7 +380,8 @@ public class PeerImpl implements Peer, ActionListener {
     public void startIdentifyUnresponsiveNodes() {
         Consensus consensus = new ConsensusImpl(selfConsensusParticipant, this, this.convertPeersToConsensusParticipants());
         consensus.addListener(this);
-        new Thread(consensus).start();
+        this.consensusThread = new Thread(consensus);
+        this.consensusThread.start();
     }
 
     //TODO: This needs to be called within the loop inside the ConsensusImplementation
@@ -432,8 +437,10 @@ public class PeerImpl implements Peer, ActionListener {
     /**
      * Stops the TCPServer running.
      */
-    private void stopServer() {
-        //interrupt and stop this.serverThread
+    void stopServer() {
+        this.server.stopServer();
+        this.shortwaveThread.stop();
+        this.consensusThread.stop();
     }
 
     /**
@@ -513,10 +520,24 @@ public class PeerImpl implements Peer, ActionListener {
                 case InitiateMulticastUpdatePosition:
                     onInitiateMulticastUpdatePosition(channel);
                     break;
+                case Stop:
+                    onStop(channel);
+                    break;
                 default:
                     break;
             }
         }
+
+        private void onStop(MessageChannel channel) {
+            Logger.log("Shutting down Peer server");
+            channel.close();
+            PeerImpl.this.setStatus(Status.Down);
+            for(Peer p : PeerImpl.this.peers) {
+                PeerImpl.this.updatePeerStatus(p, Status.Unknown);
+            }
+            PeerImpl.this.stopServer();
+        }
+
 
         /**
          * When a register event is called, add the requesting peer to the current peer's list

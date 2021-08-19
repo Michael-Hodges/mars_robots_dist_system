@@ -93,11 +93,17 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
 
     @Override
     public void sendVictory(BullyAlgorithmParticipant p) {
-        this.coordinator = this;
-        this.status = Status.Leader;
+        markSelfAsLeader();
         this.send(p, Message.Victory);
         this.sendEventToListener(PeerEvent.BullyReceiveVictory, this, Status.Leader);
     }
+
+    @Override
+    public void markSelfAsLeader() {
+        this.coordinator = this;
+        this.status = Status.Leader;
+    }
+
 
     @Override
     public void sendElectionMessage(BullyAlgorithmParticipant p) {
@@ -205,7 +211,7 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
             channel.writeInt(this.processId);
             channel.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 

@@ -105,7 +105,7 @@ public class ShortwaveRadio implements Runnable
             {
                 // Update idPortMap to have keys can send to.
                 this.idPortMap.keySet().retainAll(uuidHolder);
-                System.out.println(this.idPortMap);
+                //System.out.println(this.idPortMap);
                 break;
             }
         }
@@ -175,6 +175,7 @@ public class ShortwaveRadio implements Runnable
         {
             try
             {
+                System.out.println("Pinging with shortwave radio...");
                 ping();
                 Thread.sleep(3000); // cast ping every 3 seconds to update
                 //can add code here to send out multicast messages we want

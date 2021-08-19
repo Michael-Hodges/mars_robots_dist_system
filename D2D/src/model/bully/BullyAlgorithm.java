@@ -59,6 +59,11 @@ class BullyAlgorithm {
      * Sends victory message to all other algorithm participants
      */
     private void sendVictory() {
+        if (participants.size() == 0) {
+            self.markSelfAsLeader();
+            return;
+        }
+
         for(BullyAlgorithmParticipant p : participants) {
             if (p.getProcessId() != this.self.getProcessId()) {
                 self.sendVictory(p);

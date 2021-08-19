@@ -36,11 +36,11 @@ public class ConsensusParticipantImpl implements ConsensusParticipant {
             MessageChannel messageChannel = messageChannelFactory.getChannel(unresponsiveParticipant.getHostOrIp(), unresponsiveParticipant.getPort());
             messageChannel.writeString("consensus");
             messageChannel.writeString(Operation.Ping.name());
-
+            messageChannel.flush();
             String response = messageChannel.readNextString();
 
             messageChannel.close();
-            Logger.log("Ping response received: " + response);
+//            Logger.log("Ping response received: " + response);
             return true;
         } catch (IOException e) {
             Logger.log("IOException occurred in ConsensusParticipant or the participant"
@@ -55,18 +55,17 @@ public class ConsensusParticipantImpl implements ConsensusParticipant {
     @Override
     public boolean requestPing(ConsensusParticipant friend, ConsensusParticipant target) {
         try {
-            Logger.log("CONSENSUS: sending ping from " + friend.getHostOrIp() + " " + friend.getPort()
-                            + " to " + target.getHostOrIp() + " " + target.getPort());
+//            Logger.log("CONSENSUS: sending ping from " + friend.getHostOrIp() + " " + friend.getPort()
+//                            + " to " + target.getHostOrIp() + " " + target.getPort());
             MessageChannel messageChannel = messageChannelFactory.getChannel(friend.getHostOrIp(), friend.getPort());
             messageChannel.writeString("consensus");
             messageChannel.writeString(Operation.RequestPing.name());
             messageChannel.writeString(target.getHostOrIp());
             messageChannel.writeInt(target.getPort());
+            messageChannel.flush();
 
             String response = messageChannel.readNextString();
             messageChannel.close();
-            Logger.log("CONSENSUS: Ping request response received: " + response);
-
             return response.equals("success");
         } catch (SocketTimeoutException e) {
             Logger.log("CONSENSUS: " + e.getMessage());
@@ -75,7 +74,6 @@ public class ConsensusParticipantImpl implements ConsensusParticipant {
             Logger.log("IOException occurred in ConsensusParticipant");
             return false;
         }
-
     }
 
     public String getHostOrIp() {

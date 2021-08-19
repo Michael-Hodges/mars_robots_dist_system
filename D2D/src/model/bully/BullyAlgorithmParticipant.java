@@ -75,6 +75,11 @@ public interface BullyAlgorithmParticipant {
     void onVictoryMessage(int receivedProcessId);
 
     /**
+     * Elect yourself as leader.
+     */
+    void markSelfAsLeader();
+
+    /**
      * Returns whether an answers have been received.
      * @return true if received messages > 0
      */

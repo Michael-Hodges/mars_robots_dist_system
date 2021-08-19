@@ -1,7 +1,6 @@
 package model.sim;
 
 import controller.Logger;
-import controller.MessageChannelFactory;
 import model.Coordinator;
 import model.Peer;
 import model.PeerClient;
@@ -19,9 +18,10 @@ public class Simulation {
      * Possible scenarios to demonstrate
      */
     public enum Scenario {
-        Multicast,
+        MulticastMove,
         LeaderElection,
-        GoHome
+        GoHome,
+        StopServer
     }
 
     static Random random = new Random();
@@ -51,7 +51,7 @@ public class Simulation {
     public void start(Scenario scenario) {
         setRegisteredPeers();
         switch(scenario) {
-            case Multicast:
+            case MulticastMove:
                 movePeers();
                 break;
             case LeaderElection:
@@ -59,6 +59,9 @@ public class Simulation {
                 break;
             case GoHome:
                 movePeersHome();
+                break;
+            case StopServer:
+                stopServer();
                 break;
             default:
                 break;
@@ -111,6 +114,17 @@ public class Simulation {
         int y = random.nextInt(1000);
         this.peerClient.multicastRelocate(p.getHostOrIp(), p.getPort(), x, y);
     }
+
+    /**
+     * Simulates a server going down
+     */
+    private void stopServer() {
+        Logger.log("Simulating a server going down.");
+        Peer p = randomPeer();
+        this.peerClient.stopServer(p.getHostOrIp(), p.getPort());
+        Logger.log(p.toString());
+    }
+
 
     /**
      * Adds all registered peers from the coordinator to the peers in the simulation.

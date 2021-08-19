@@ -15,6 +15,7 @@ public class TCPServer {
     int requestCounter = 0;
     int port;
     MessageRouter messageRouter;
+    ServerSocket server;
 
 
     /**
@@ -43,9 +44,8 @@ public class TCPServer {
      */
     public void run() throws IOException {
 
-        ServerSocket server = new ServerSocket(this.port);
+        this.server = new ServerSocket(this.port);
         log("Server initialized on port " + port);
-
         while (true) {
             this.requestCounter++;
             Socket incomingSocket = server.accept();
@@ -56,6 +56,15 @@ public class TCPServer {
             t.start();
         }
     }
+
+    public void stopServer() {
+        try {
+            this.server.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     /**
      * Registers new routes in the message router, using a process name (such as peer or bully),

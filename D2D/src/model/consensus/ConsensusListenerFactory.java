@@ -42,8 +42,9 @@ public class ConsensusListenerFactory implements MessageListenerFactory {
             try {
                 String hostOrIp = channel.readNextString();
                 int port = channel.readNextInt();
+//                Logger.log("CONSENSUS: Calling Ping on: " + hostOrIp + ":" + port);
                 boolean pingResponse = consensusParticipant.ping(new ConsensusParticipantImpl(hostOrIp, port));
-
+//                Logger.log("CONSENSUS: Received Ping on: " + hostOrIp + ":" + port);
                 channel.writeString(pingResponse ? "success" : "failure");
                 channel.close();
             } catch (IOException e) {
