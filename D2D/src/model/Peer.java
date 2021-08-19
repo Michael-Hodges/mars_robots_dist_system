@@ -1,6 +1,5 @@
 package model;
 
-
 import java.awt.event.ActionListener;
 import java.util.List;
 
@@ -67,6 +66,9 @@ public interface Peer {
      */
     List<Peer> getPeers();
 
+    void identifyUnresponsiveNodes();
+
+
     /**
      * Gets the status of a Peer
      * @return the status of this peer
@@ -78,4 +80,5 @@ public interface Peer {
      * @param status the status to set for this peer
      */
     void setStatus(PeerImpl.Status status);
+
 }
