@@ -226,6 +226,12 @@ public class BullyAlgorithmParticipantImpl implements BullyAlgorithmParticipant{
         sendEventToListener(event, null, Status.Unknown);
     }
 
+    /**
+     * Sends a PeerEvent to the listener as a BullyActionEvent
+     * @param event PeerEvent to wrap
+     * @param respondent respondent to wrap in the BullyActionEvent
+     * @param respondentStatus status to apply to the respondent
+     */
     private void sendEventToListener(PeerEvent event, BullyAlgorithmParticipant respondent,
                                      BullyAlgorithmParticipantImpl.Status respondentStatus) {
         int id = BullyAlgorithmParticipantImpl.EVENT_ID_COUNTER++;

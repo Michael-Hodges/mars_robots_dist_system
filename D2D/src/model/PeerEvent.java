@@ -1,5 +1,8 @@
 package model;
 
+/**
+ * List of Events for peers to use
+ */
 public enum PeerEvent {
     StartServer,
     Register,
