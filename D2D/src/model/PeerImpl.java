@@ -38,7 +38,24 @@ public class PeerImpl implements Peer, ActionListener {
             case BullyReceiveAnswer:
                 onBullyResponses((BullyActionEvent)event);
                 break;
+            case ConsensusNodeReachable:
+                onConsensusNodeReachable((ConsensusImpl.ConsensusAction)e);
+                break;
+            case ConsensusNodeUnreachable:
+                onConsensusNodeUnReachable((ConsensusImpl.ConsensusAction)e);
+                break;
         }
+    }
+
+    private void onConsensusNodeUnReachable(ConsensusImpl.ConsensusAction e) {
+        Peer unreachablePeer = this.locatePeer(e.getHostOrIp(), e.getPort());
+        // We could remove the peer but for demo purposes we just flag it
+        unreachablePeer.setStatus(Status.Down);
+    }
+
+    private void onConsensusNodeReachable(ConsensusImpl.ConsensusAction e) {
+        Peer reachablePeer = this.locatePeer(e.getHostOrIp(), e.getPort());
+        reachablePeer.setStatus(Status.Up);
     }
 
     /**
@@ -355,7 +372,7 @@ public class PeerImpl implements Peer, ActionListener {
     @Override
     public void identifyUnresponsiveNodes() {
         Consensus consensus = new ConsensusImpl(selfConsensusParticipant, this.convertPeersToConsensusParticipants());
-        // TODO: consensus.addListener(this);
+        consensus.addListener(this);
         new Thread(consensus).start();
     }
 

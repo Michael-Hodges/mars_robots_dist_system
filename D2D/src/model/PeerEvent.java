@@ -18,5 +18,7 @@ public enum PeerEvent {
     PeerAdded,
     PeerRemoved,
     PeerStatusUpdated,
+    ConsensusNodeReachable,
+    ConsensusNodeUnreachable,
     Unknown
 }

@@ -1,6 +1,10 @@
 package model.consensus;
 
 
+import model.ActionPeerEvent;
+import model.PeerEvent;
+
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 
@@ -20,45 +24,16 @@ public class ConsensusImpl implements Consensus {
         while (true) {
             try {
                 for (ConsensusParticipant potentiallyUnresponsive : this.participantList) {
-                   this.start(potentiallyUnresponsive, this.participantList);
+                   this.runConsensus(potentiallyUnresponsive, this.participantList);
                 }
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
                 // ignore
             }
         }
-
     }
 
-    @Override
-    public void addListener(ActionListener listener) {
-        this.listeners.add(listener);
-    }
-
-    @Override
-    public List<ConsensusParticipant> start(ConsensusParticipant potentiallyUnresponsiveParticipant, List<ConsensusParticipant> allParticipants) {
-        // prior to running algorithm double check that the participant is indeed unresponsive
-        if(this.isTimeOutOccurred(potentiallyUnresponsiveParticipant)) {
-            return this.runConsensus(potentiallyUnresponsiveParticipant, allParticipants);
-        } else {
-            return allParticipants;
-        }
-    }
-
-    private boolean isTimeOutOccurred(ConsensusParticipant p) {
-//        Future<Boolean> future = CompletableFuture.supplyAsync(p::confirmSelfResponsiveness);
-//        try {
-//            future.get(5, TimeUnit.SECONDS);
-//            // we got the response - the participant is not unresponsive
-//            return false;
-//        } catch (TimeoutException | InterruptedException | ExecutionException e) {
-//            return  true;
-//        }
-        // TODO: ???
-        return false;
-    }
-
-    private List<ConsensusParticipant> runConsensus(ConsensusParticipant potentiallyUnresponsiveParticipant, List<ConsensusParticipant> allParticipants) {
+    private void runConsensus(ConsensusParticipant potentiallyUnresponsiveParticipant, List<ConsensusParticipant> allParticipants) {
         List<Boolean> responses =  Collections.synchronizedList(new ArrayList<>());
         List<ConsensusParticipant> otherParticipantList = new ArrayList<>(allParticipants);
         otherParticipantList.remove(potentiallyUnresponsiveParticipant);
@@ -68,7 +43,10 @@ public class ConsensusImpl implements Consensus {
         while (responses.size() < otherParticipantList.size() / 2) {
             if (iterator.hasNext()) {
                 ConsensusParticipant friend = iterator.next();
-                responses.add(this.leader.requestPing(friend, potentiallyUnresponsiveParticipant));
+
+                if (!friend.equals(potentiallyUnresponsiveParticipant)) {
+                    responses.add(this.leader.requestPing(friend, potentiallyUnresponsiveParticipant));
+                }
             } else {
                 break;
             }
@@ -78,19 +56,47 @@ public class ConsensusImpl implements Consensus {
         long unResponsiveCount = responses.stream().filter(response -> !response).count(); // counts how many False
         if(unResponsiveCount > responsiveCount) {
             this.participantList.remove(potentiallyUnresponsiveParticipant);
-            return otherParticipantList;
+            this.onConsensusReachedPositive(potentiallyUnresponsiveParticipant);
         } else {
-            return allParticipants;
+            this.onConsensusReachedNegative(potentiallyUnresponsiveParticipant);
+        }
+    }
+
+    private void onConsensusReachedNegative(ConsensusParticipant unResponsiveParticipant) {
+        for (ActionListener listener : this.listeners) {
+            listener.actionPerformed(new ConsensusAction(this, unResponsiveParticipant.getHostOrIp(),
+                    unResponsiveParticipant.getPort(), PeerEvent.ConsensusNodeUnreachable));
+        }
+    }
+
+    private void onConsensusReachedPositive(ConsensusParticipant responsiveParticipant) {
+        for (ActionListener listener : this.listeners) {
+            listener.actionPerformed(new ConsensusAction(this, responsiveParticipant.getHostOrIp(),
+                    responsiveParticipant.getPort(), PeerEvent.ConsensusNodeReachable));
         }
     }
 
     @Override
-    public void addParticipant(ConsensusParticipant participant) {
-        this.participantList.add(participant);
+    public void addListener(ActionListener listener) {
+        this.listeners.add(listener);
     }
 
-    @Override
-    public List<ConsensusParticipant> getActiveParticipants() {
-        return this.participantList;
+    public class ConsensusAction extends ActionPeerEvent {
+        private String hostOrIp;
+        private int port;
+
+        public ConsensusAction(Object source, String hostOrIp, int port, PeerEvent peerEvent) {
+            super(source, 1, peerEvent);
+            this.hostOrIp = hostOrIp;
+            this.port = port;
+        }
+
+        public String getHostOrIp() {
+            return hostOrIp;
+        }
+
+        public int getPort() {
+            return port;
+        }
     }
 }

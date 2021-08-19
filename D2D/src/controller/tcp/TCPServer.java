@@ -45,8 +45,8 @@ public class TCPServer {
 
         ServerSocket server = new ServerSocket(this.port);
         log("Server initialized on port " + port);
+        server.setSoTimeout(3000);
 
-        //TODO: Do we want a timeout?
         while (true) {
             this.requestCounter++;
             Socket incomingSocket = server.accept();

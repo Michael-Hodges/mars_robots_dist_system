@@ -5,6 +5,7 @@ import controller.MessageChannelFactory;
 import model.Logger;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 
 public class ConsensusParticipantImpl implements ConsensusParticipant {
 
@@ -37,11 +38,16 @@ public class ConsensusParticipantImpl implements ConsensusParticipant {
             messageChannel.writeString(Operation.Ping.name());
 
             String response = messageChannel.readNextString();
+
             messageChannel.close();
             Logger.log("Ping response received: " + response);
             return true;
         } catch (IOException e) {
-            Logger.log("IOException occurred in ConsensusParticipant");
+            Logger.log("IOException occurred in ConsensusParticipant or the participant"
+                    + unresponsiveParticipant.getHostOrIp()
+                    + " "
+                    + unresponsiveParticipant.getPort()
+                    + " timed out");
             return false;
         }
     }
